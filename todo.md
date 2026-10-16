@@ -9,11 +9,15 @@ One elevated cmd line per laptop (README.md), about 40 laptops, run by crew memb
 - [x] PowerLoss agent: exe from `build-dist.sh`, settings.json with computer_name and location = function, boot task as SYSTEM with restart, firewall rule. Answers on :3000 after reboot, also from the LAN.
 - [x] OLA client 6.4.10 in C:\OLA-Klient with ola.properties and SOFT.properties defaults (OLA server 192.168.1.21:8081, event tiomila2026), shortcut on the public desktop.
 - [x] Wallpaper: light grey (190,190,190), function and name upper right, machine-wide via PersonalizationCSP.
+- [x] Power: machine policy (HKLM\SOFTWARE\Policies\Microsoft\Power\PowerSettings) 0 on AC and battery for display off, dim, sleep, hibernate, unattended sleep, disk, lid, power and sleep button, password on wake; hibernate off, USB selective suspend and PCIe power saving off, network adapters never sleep, no idle lock, screen saver off by policy in every profile. Replaces an older local policy on 10.0.0.37 that turned the screen off after 30 min on battery.
+- [x] Nummerlappar (PRINT-xx): hosts `192.168.1.27 OKIC542PS`, port okic542, paper form "10mila" 160 x 225 mm, Python 3.12 with reportlab and pypdf, Acrobat Reader 64-bit (sv_SE, no EULA flag: accepted at the first test print), C:\bibs from 10mila_bib_print_via_acrobat_reader_on_windows (PDFs in out_bibs kept), C:\bibs-prod from 10mila_bibs_prod, nummerlappar.cmd on the desktop. Tested as PRINT-01: all ok except the OKI driver.
 
 ## Open
 
 - [ ] Public path. The repo is private: raw GitHub URLs need it public, and the release must carry `powerloss-agent.exe` and `OLA-Klient.zip` (built by `build-dist.sh`, 10 MB and 90 MB). Håkan decides: make the repo public, and whether the OLA client may be published (otherwise host the zip elsewhere and pass `-ReleaseUrl`).
-- [ ] Printer drivers: which printers (model, IP or queue name)? ola.properties prints bib numbers to "Phaser 6510 WiFi".
+- [ ] OKI C542 PS driver: oki.com refuses scripted downloads and Windows 11 24H2 has no PS class driver. Håkan supplies the driver zip; it goes in the release as `oki-c542-ps.zip` (or `-OkiDriverUrl`). Until then the printer step says FAILED.
+- [ ] Other printers (ola.properties prints bib numbers to "Phaser 6510 WiFi"; 10mila_bibs_prod settings name "Xerox 6510 PS"): which ones, and on which functions?
+- [ ] Driver settings that live in the OKI driver (tray, "10mila" as default paper, landscape) per the printer PDF: set by hand at the first test print for now.
 - [ ] Computer names and counts per function in `computers.csv` are a first guess (40 in total). Check against the real laptop list and labels.
 - [ ] OLA event name on the race server (`-OlaEvent`, default tiomila2026) and server IP (`-OlaServer`, default 192.168.1.21) for 2027.
 - [ ] Start the OLA client once by hand on a test laptop: check that it opens the server dialog with the defaults (not tested over ssh, it is a GUI).
