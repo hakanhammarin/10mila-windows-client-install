@@ -23,3 +23,14 @@ One elevated cmd line per laptop (README.md), about 40 laptops, run by crew memb
 - [ ] Start the OLA client once by hand on a test laptop: check that it opens the server dialog with the defaults (not tested over ssh, it is a GUI).
 - [ ] Look at the wallpaper on the screen after logon (only the file and the policy were checked over ssh).
 - [ ] PowerLoss as a real Windows service needs a service handler in the agent (monitoring owns powerloss-agent); the boot task works meanwhile.
+
+## Upgrade to OLA 6.6 (plan)
+
+The 6.5.0 MSI is a WiX major upgrade (UpgradeCode {6B1C5800-566E-3EC1-AD56-EC479F512C21}, RemoveExistingProducts after InstallInitialize), so a newer MSI with the same UpgradeCode replaces 6.5 in place; settings in C:\ProgramData\OLA6 stay.
+
+- [ ] Get SOFT_OLA-6.6.x.msi from SOFT. Check its UpgradeCode is the same (Property table) and note what changed in ola.properties keys.
+- [ ] Upload it to a new GitHub release and set `$OlaVersion` in install.ps1 to 6.6.x (or test first with `-OlaVersion 6.6.x`).
+- [ ] Test on 10.0.0.37: the one-liner over 6.5.0 must leave exactly one "OLA 6" at 6.6.x (the check fails on two entries or a wrong version), and the desktop icon must start 6.6.
+- [ ] Crew laptops: rerun the same one-liner; it upgrades only OLA and rewrites the properties.
+- [ ] Servers: client and server versions must match. Upgrading OLA on server01/server02 and the AWS OLA server is the `ola` / `aws` agents' work (repository/OLA_SERVER), to be done in the same step.
+- [ ] Rollback: rerun with `-OlaVersion 6.5.0` after uninstalling 6.6 (`msiexec /x {product code}`); keep the 6.5.0 MSI in the old release.

@@ -222,7 +222,8 @@ Check 'SportIdent driver in the driver store' ((& pnputil.exe /enum-drivers | Ou
 Start-Sleep 3
 $st = try { Invoke-RestMethod -UseBasicParsing -TimeoutSec 5 http://127.0.0.1:3000/api/status } catch { $null }
 Check "PowerLoss answers on :3000 (soc $($st.soc), charging $($st.is_charging))" ($null -ne $st)
-Check "OLA $OlaVersion and its properties" ((Test-Path "$ola\bin\javaw.exe", "$ola\bin\OLA-Klient.bat", "$env:PUBLIC\Desktop\OLA-Klient.lnk") -notcontains $false -and ((Get-Content "$olaCfg\SOFT.properties") -match "lastExtURL=$OlaServer"))
+$olaNow = @(Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*' -ErrorAction SilentlyContinue | Where-Object DisplayName -eq 'OLA 6')
+Check "OLA $OlaVersion and its properties" (($olaNow.Count -eq 1) -and ($olaNow[0].DisplayVersion -eq $OlaVersion) -and (Test-Path "$ola\bin\javaw.exe", "$ola\bin\OLA-Klient.bat", "$env:PUBLIC\Desktop\OLA-Klient.lnk") -notcontains $false -and ((Get-Content "$olaCfg\SOFT.properties") -match "lastExtURL=$OlaServer"))
 $bad = @($power.Keys | Where-Object { $p = Get-ItemProperty "HKLM:\SOFTWARE\Policies\Microsoft\Power\PowerSettings\$_"; $p.ACSettingIndex -ne 0 -or $p.DCSettingIndex -ne 0 })
 Check 'never sleeps, no screen off, lid and buttons do nothing' ($bad.Count -eq 0)
 if ($me.Group -eq 'Nummerlappar') {
