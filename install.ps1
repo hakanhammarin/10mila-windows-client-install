@@ -5,7 +5,8 @@
 param(
   [string]$Name,                                  # e.g. TA-03; empty = pick from the list
   [string]$OlaServer = '192.168.1.21',            # OLA server on the race network
-  [string]$OlaEvent  = 'tiomila2026',             # event name on the OLA server
+  [string]$OlaEvent  = "Tiomila, Tran$([char]0xE5)s (Stafettligan, #3)",   # event name on the OLA server (2026); file stays ASCII for PowerShell 5.1
+  [string]$OlaVersion = '6.5.0',                  # SOFT_OLA-<version>.msi in the release
   [string]$BaseUrl    = 'https://raw.githubusercontent.com/hakanhammarin/10mila-windows-client-install/main',
   [string]$ReleaseUrl = 'https://github.com/hakanhammarin/10mila-windows-client-install/releases/latest/download',
   [string]$SiDriverUrl = 'https://sportident.com/download/sportident-usb-driver.2026.06.09.zip',  # signed, works on 24H2+
@@ -119,27 +120,24 @@ Get-NetFirewallRule -DisplayName '10mila PowerLoss' -ErrorAction SilentlyContinu
 New-NetFirewallRule -DisplayName '10mila PowerLoss' -Direction Inbound -Program "$pl\powerloss-agent.exe" -Action Allow -Profile Any | Out-Null
 Start-ScheduledTask -TaskName '10mila PowerLoss'
 
-# --- 5. OLA client -----------------------------------------------------------
+# --- 5. OLA client 6.5.0 (SOFT's MSI, silent) ------------------------------
 Step 'OLA client'
-$ola = 'C:\OLA-Klient'
-if (-not (Test-Path "$ola\.installed")) {   # a rerun keeps a complete program (it may be open); new OLA version: delete C:\OLA-Klient\.installed
-  Get-File "$ReleaseUrl/OLA-Klient.zip" "$Tmp\OLA-Klient.zip" | Out-Null
-  Remove-Item -Recurse -Force "$Tmp\ola" -ErrorAction SilentlyContinue
-  Expand-Archive -Force "$Tmp\OLA-Klient.zip" "$Tmp\ola"   # the zip holds the OLA-Klient folder
-  # Unpack beside, then copy: an OLA client left open used to abort Expand-Archive halfway (no .bat files).
-  & robocopy.exe "$Tmp\ola\OLA-Klient" $ola /E /R:1 /W:1 /NFL /NDL /NJH /NJS /NP | Out-Null
-  if ($LASTEXITCODE -ge 8) { throw "copying the OLA client failed (close OLA and run again)" }
-  Set-Content "$ola\.installed" (Get-Date -Format s)
+$ola = 'C:\Program Files\OLA 6'; $olaCfg = 'C:\ProgramData\OLA6'   # 6.5 reads its settings from ProgramData
+$have = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*' -ErrorAction SilentlyContinue | Where-Object DisplayName -eq 'OLA 6'
+if ($have.DisplayVersion -ne $OlaVersion) {   # same version installed: keep it (it may be open)
+  $msi = Get-File "$ReleaseUrl/SOFT_OLA-$OlaVersion.msi" "$Tmp\ola.msi"
+  $p = Start-Process msiexec.exe -Wait -PassThru -ArgumentList "/i `"$msi`" /qn /norestart /l*v `"$Data\ola-msi.log`""
+  if ($p.ExitCode -notin 0, 3010) { throw "OLA msi failed: exit $($p.ExitCode), see $Data\ola-msi.log" }
 }
-New-Item -ItemType Directory -Force "$ola\OLA6\db" | Out-Null
+if (Test-Path 'C:\OLA-Klient\.installed') { Remove-Item -Recurse -Force 'C:\OLA-Klient' -ErrorAction SilentlyContinue }   # the 6.4 zip install of the first test runs
+New-Item -ItemType Directory -Force "$olaCfg\db" | Out-Null
+# Java properties: escape = : # ! and write non-ASCII as \uXXXX (event names have a-ring).
+$ev = -join ($OlaEvent.ToCharArray() | ForEach-Object { if ([int]$_ -gt 127) { '\u{0:X4}' -f [int]$_ } elseif ('=:#!'.Contains([string]$_)) { "\$_" } else { $_ } })
 foreach ($f in 'ola.properties', 'SOFT.properties') {
-  (Get-Content -Raw (Get-File "$BaseUrl/config/$f" "$Tmp\$f")).Replace('@OLA_SERVER@', $OlaServer).Replace('@OLA_EVENT@', $OlaEvent) |
-    Set-Content -Encoding ASCII "$ola\OLA6\$f"
+  (Get-Content -Raw (Get-File "$BaseUrl/config/$f" "$Tmp\$f")).Replace('@OLA_SERVER@', $OlaServer).Replace('@OLA_EVENT@', $ev) |
+    Set-Content -Encoding ASCII "$olaCfg\$f"
 }
-$sc = (New-Object -ComObject WScript.Shell).CreateShortcut("$env:PUBLIC\Desktop\OLA-Klient.lnk")
-$sc.TargetPath = "$ola\OLA-Klient.bat"; $sc.WorkingDirectory = $ola; $sc.WindowStyle = 7
-if (Test-Path "$ola\OLA_Klient_ikon.ico") { $sc.IconLocation = "$ola\OLA_Klient_ikon.ico" } else { $sc.IconLocation = "$ola\bin\javaw.exe" }
-$sc.Save()
+Copy-Item -Force 'C:\ProgramData\Microsoft\Windows\Start Menu\Programs\OLA 6\OLA-Klient.lnk' "$env:PUBLIC\Desktop\OLA-Klient.lnk"
 
 # --- 6. Nummerlappar: bib printing via Acrobat to the OKI C542 -------------
 if ($me.Group -eq 'Nummerlappar') {
@@ -224,7 +222,7 @@ Check 'SportIdent driver in the driver store' ((& pnputil.exe /enum-drivers | Ou
 Start-Sleep 3
 $st = try { Invoke-RestMethod -UseBasicParsing -TimeoutSec 5 http://127.0.0.1:3000/api/status } catch { $null }
 Check "PowerLoss answers on :3000 (soc $($st.soc), charging $($st.is_charging))" ($null -ne $st)
-Check 'OLA client and properties' ((Test-Path "$ola\bin\javaw.exe", "$ola\OLA-Klient.bat", "$ola\bin\OLA-Klient.bat", "$ola\lib") -notcontains $false -and ((Get-Content "$ola\OLA6\SOFT.properties") -match "lastExtURL=$OlaServer"))
+Check "OLA $OlaVersion and its properties" ((Test-Path "$ola\bin\javaw.exe", "$ola\bin\OLA-Klient.bat", "$env:PUBLIC\Desktop\OLA-Klient.lnk") -notcontains $false -and ((Get-Content "$olaCfg\SOFT.properties") -match "lastExtURL=$OlaServer"))
 $bad = @($power.Keys | Where-Object { $p = Get-ItemProperty "HKLM:\SOFTWARE\Policies\Microsoft\Power\PowerSettings\$_"; $p.ACSettingIndex -ne 0 -or $p.DCSettingIndex -ne 0 })
 Check 'never sleeps, no screen off, lid and buttons do nothing' ($bad.Count -eq 0)
 if ($me.Group -eq 'Nummerlappar') {
