@@ -122,9 +122,14 @@ Start-ScheduledTask -TaskName '10mila PowerLoss'
 # --- 5. OLA client -----------------------------------------------------------
 Step 'OLA client'
 $ola = 'C:\OLA-Klient'
-if (-not (Test-Path "$ola\bin\javaw.exe")) {   # a rerun keeps the program (it may be open) and rewrites only the properties; new OLA version: delete C:\OLA-Klient\bin first
+if (-not (Test-Path "$ola\.installed")) {   # a rerun keeps a complete program (it may be open); new OLA version: delete C:\OLA-Klient\.installed
   Get-File "$ReleaseUrl/OLA-Klient.zip" "$Tmp\OLA-Klient.zip" | Out-Null
-  Expand-Archive -Force "$Tmp\OLA-Klient.zip" (Split-Path $ola)   # the zip holds the OLA-Klient folder
+  Remove-Item -Recurse -Force "$Tmp\ola" -ErrorAction SilentlyContinue
+  Expand-Archive -Force "$Tmp\OLA-Klient.zip" "$Tmp\ola"   # the zip holds the OLA-Klient folder
+  # Unpack beside, then copy: an OLA client left open used to abort Expand-Archive halfway (no .bat files).
+  & robocopy.exe "$Tmp\ola\OLA-Klient" $ola /E /R:1 /W:1 /NFL /NDL /NJH /NJS /NP | Out-Null
+  if ($LASTEXITCODE -ge 8) { throw "copying the OLA client failed (close OLA and run again)" }
+  Set-Content "$ola\.installed" (Get-Date -Format s)
 }
 New-Item -ItemType Directory -Force "$ola\OLA6\db" | Out-Null
 foreach ($f in 'ola.properties', 'SOFT.properties') {
@@ -219,7 +224,7 @@ Check 'SportIdent driver in the driver store' ((& pnputil.exe /enum-drivers | Ou
 Start-Sleep 3
 $st = try { Invoke-RestMethod -UseBasicParsing -TimeoutSec 5 http://127.0.0.1:3000/api/status } catch { $null }
 Check "PowerLoss answers on :3000 (soc $($st.soc), charging $($st.is_charging))" ($null -ne $st)
-Check 'OLA client and properties' ((Test-Path "$ola\bin\javaw.exe") -and ((Get-Content "$ola\OLA6\SOFT.properties") -match "lastExtURL=$OlaServer"))
+Check 'OLA client and properties' ((Test-Path "$ola\bin\javaw.exe", "$ola\OLA-Klient.bat", "$ola\bin\OLA-Klient.bat", "$ola\lib") -notcontains $false -and ((Get-Content "$ola\OLA6\SOFT.properties") -match "lastExtURL=$OlaServer"))
 $bad = @($power.Keys | Where-Object { $p = Get-ItemProperty "HKLM:\SOFTWARE\Policies\Microsoft\Power\PowerSettings\$_"; $p.ACSettingIndex -ne 0 -or $p.DCSettingIndex -ne 0 })
 Check 'never sleeps, no screen off, lid and buttons do nothing' ($bad.Count -eq 0)
 if ($me.Group -eq 'Nummerlappar') {
