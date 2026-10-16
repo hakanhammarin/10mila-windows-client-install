@@ -14,9 +14,8 @@ One elevated cmd line per laptop (README.md), about 40 laptops, run by crew memb
 
 ## Open
 
-- [ ] Public path. The repo is private: raw GitHub URLs need it public, and the release must carry `powerloss-agent.exe` and `OLA-Klient.zip` (built by `build-dist.sh`, 10 MB and 90 MB). Håkan decides: make the repo public, and whether the OLA client may be published (otherwise host the zip elsewhere and pass `-ReleaseUrl`).
+- [x] Public: repo public (Håkan, 2026-10-16), release v2026.10.16 with OLA-Klient.zip, powerloss-agent.exe, oki-c542-ps.zip. The real one-liner from raw.githubusercontent.com: PASS as PRINT-01 on 10.0.0.37.
 - [x] OKI C542 PS driver: OKI's OKW3S05H106_303250.exe (v1.0.6, from oki.com, downloaded by Håkan, sha256 3ee433b5...d8582) self-extracts its `Driver` folder when started on Windows; zipped as `dist/oki-c542-ps.zip` (302 files, OKW3S05H.INF, model "OKI C542 PS"). PASS as PRINT-01 2026-10-16.
-- [ ] Where `oki-c542-ps.zip` is hosted: the GitHub release (OKI's license may not allow republishing) or a URL Håkan gives (`-OkiDriverUrl`).
 - [ ] Other printers (ola.properties prints bib numbers to "Phaser 6510 WiFi"; 10mila_bibs_prod settings name "Xerox 6510 PS"): which ones, and on which functions?
 - [ ] Driver settings that live in the OKI driver (tray, "10mila" as default paper, landscape) per the printer PDF: set by hand at the first test print for now.
 - [ ] Computer names and counts per function in `computers.csv` are a first guess (40 in total). Check against the real laptop list and labels.
