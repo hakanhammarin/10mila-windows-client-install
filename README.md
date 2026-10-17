@@ -50,6 +50,7 @@ curl -fsSLo %TEMP%\restore.ps1 https://raw.githubusercontent.com/hakanhammarin/1
 | ola | OLA from SOFT's MSI, properties in `C:\ProgramData\OLA6`, OLA-Klient and TA-Klient icons | x | |
 | nummerlappar | bib printing station on PRINT-xx: OKI C542 PS with default paper "10mila bib" (225x160 landscape, fed short edge first), Python, Acrobat Reader, `C:\bibs` printing in descending order | x | |
 | reader | Acrobat Reader on every laptop, default for PDF (policy, at sign-in), no AI assistant, upsell, cloud, welcome screen or updater | x | x |
+| edge | Edge without first-run questions (also after Rensa profil), local start page with the event graphics and buttons: Google, Eventor + 10MILA/online or Gmail/O-Ringen/Resultat | x | x |
 | libreoffice | LibreOffice (O-Ringen deltagarservice), Swedish, no update checks | | x |
 | receipt | Star TSP143 driver; "Hello world" on 72 mm paper at boot and when plugged in | x | x |
 | battery | battery test: on battery a row a minute (time, %, mWh, SOH, volts) in `C:\ProgramData\10mila\battery`; when the charger is back or after it ran out, runtime and SOH on the wallpaper | x | x |
