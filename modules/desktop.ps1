@@ -20,6 +20,15 @@ foreach ($d in Get-ChildItem C:\Users -Directory | Where-Object Name -ne 'Public
     Move-Item -Force $f.FullName "$tools\$($f.Name)"; $moves += [pscustomobject]@{ From = $f.FullName; To = "$tools\$($f.Name)"; Hidden = $false }
     Write-Host "moved $($f.Name) to TOOLS"
   }
+  # With the OLA MSI (10mila profile) the old portable OLA launchers on the desktop (OLA.bat, TA-Klient.bat ...) go to
+  # Skrivbord-arkiv; their program folders stay (hidden), and OLA-Klient/TA-Klient on the desktop start the current version.
+  if ($Modules -contains 'ola') {
+    foreach ($bat in Get-ChildItem $d -File | Where-Object { $_.Extension -in '.bat', '.cmd' -and (Select-String -Path $_.FullName -Pattern 'OLA|taclient' -Quiet) }) {
+      $arc = "$(Split-Path $d)\Skrivbord-arkiv"; New-Item -ItemType Directory -Force $arc | Out-Null
+      Move-Item -Force $bat.FullName "$arc\$($bat.Name)"; $moves += [pscustomobject]@{ From = $bat.FullName; To = "$arc\$($bat.Name)"; Hidden = $false }
+      Write-Host "old OLA launcher $($bat.Name) moved to Skrivbord-arkiv"
+    }
+  }
   foreach ($bat in Get-ChildItem $d -File | Where-Object Extension -in '.bat', '.cmd') {
     foreach ($m in Select-String -Path $bat.FullName -Pattern '^\s*cd\s+"?([^"\\/]+)"?\s*$') {   # "cd OLA-Klient": the program folder
       $dir = Get-Item "$d\$($m.Matches[0].Groups[1].Value)" -Force -ErrorAction SilentlyContinue
