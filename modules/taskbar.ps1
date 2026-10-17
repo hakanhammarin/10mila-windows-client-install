@@ -16,6 +16,12 @@ $pins = foreach ($f in $desks | ForEach-Object { Get-ChildItem $_ -File -ErrorAc
   $sc.Save()
   $to
 }
+# Edge with the start page: Edge ignores home page and start page policies on laptops outside a domain, so the taskbar
+# button opens the page itself.
+if (Test-Path "$Data\start\index.html") {
+  $sc = $sh.CreateShortcut("$menu\Edge.lnk"); $sc.TargetPath = "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe"
+  $sc.Arguments = '"file:///' + ("$Data\start\index.html" -replace '\\', '/') + '"'; $sc.Save(); $pins = @($pins) + "$menu\Edge.lnk"
+}
 $xml = @"
 <?xml version="1.0" encoding="utf-8"?>
 <LayoutModificationTemplate xmlns="http://schemas.microsoft.com/Start/2014/LayoutModification" xmlns:defaultlayout="http://schemas.microsoft.com/Start/2014/FullDefaultLayout" xmlns:start="http://schemas.microsoft.com/Start/2014/StartLayout" xmlns:taskbar="http://schemas.microsoft.com/Start/2014/TaskbarLayout" Version="1">

@@ -1,5 +1,6 @@
-# edge.ps1 - Edge that starts without questions (also after "Rensa profil"), on a local start page with the event's graphics
-# and buttons for the sites the crew needs. All as machine policy, so a cleared profile gets it again.
+# edge.ps1 - Edge that starts without questions (also after "Rensa profil"), a local start page with the event's graphics
+# and buttons for the sites the crew needs (opened by the Edge taskbar button: Edge ignores home page, start page and
+# search engine policies on laptops outside a domain or MDM), and the same links as managed favorites.
 Step 'Edge: no first-run questions, local start page'
 $start = "$Data\start"; New-Item -ItemType Directory -Force $start | Out-Null
 $links = @(@('Google', 'https://www.google.se', 'general'), @('Eventor', 'https://eventor.orientering.se', 'general'))
