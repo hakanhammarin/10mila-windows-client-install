@@ -53,3 +53,11 @@ O-Ringen readout laptop TA31 (10.0.0.40, Windows 10 Enterprise, user funktionar)
 - [x] Hello world: 20 mm feed before the cut.
 - [ ] Rehearsal on the arena: the freeze from 1 h before it needs its date and time in freeze.csv.
 - [ ] Check the taskbar pins after a sign-in on .37 (Windows 11) and TA31 (Windows 10).
+
+## Bib paper, autologin, logo (2026-10-17)
+
+- [x] OKIC542PS default: paper "10mila bib" (form 160 x 225 mm = fed short edge first), landscape, set through System.Printing; checked as ns0000:UserForm197 + psk:Landscape on .37.
+- [x] Descending bib order: install patches the loop in C:\bibs\acrobat_print_2.py (my token gets 403 on 10mila_bib_print_via_acrobat_reader_on_windows). Drop the patch when that repo has it.
+- [x] Wallpaper: "Skrivare OKI: <ip>" from hosts; 10MILA logo (Tranås 2026) lower right on the 10mila style. Desktop icons Large.
+- [x] Automatic sign-in (LSA secret DefaultPassword, Winlogon values saved for restore; restore clears the secret). PASS on .37.
+- [ ] Give the token write access to 10mila_bib_print_via_acrobat_reader_on_windows, or merge the descending loop there.

@@ -26,13 +26,14 @@ curl -fsSLo %TEMP%\restore.ps1 https://raw.githubusercontent.com/hakanhammarin/1
 | name | computer name picker by function (`computers.csv`) | x | |
 | sportident | SPORTident USB driver | x | |
 | power | never sleep, dim or lock; lid and buttons do nothing; no screen saver | x | x |
+| autologon | automatic sign-in with the account signed in now; password asked for (or `TENMILA_AUTOLOGON_PASSWORD`), kept as an LSA secret | x | x |
 | powerloss | PowerLoss agent at boot | x | |
 | ola | OLA from SOFT's MSI, properties in `C:\ProgramData\OLA6`, OLA-Klient and TA-Klient icons | x | |
-| nummerlappar | bib printing station on PRINT-xx (OKI C542 PS, Python, Acrobat Reader, `C:\bibs`) | x | |
+| nummerlappar | bib printing station on PRINT-xx: OKI C542 PS with default paper "10mila bib" (225x160 landscape, fed short edge first), Python, Acrobat Reader, `C:\bibs` printing in descending order | x | |
 | receipt | Star TSP143 driver; "Hello world" on 72 mm paper at boot and when plugged in | x | x |
 | firewall | "Brandvägg event" in TOOLS: on = every Windows allow rule off, in only ssh/PowerLoss/mDNS/DHCP, out only private ranges; no internet | x | x |
 | update | "10MILA UPDATE" in TOOLS and at every boot: the one-liner again with this laptop's choices (`C:\ProgramData\10mila\profile.json`) and the versions in git | x | x |
-| wallpaper | BGInfo replacement: Dator, Funktion, Uppgift upper right (oringen: the O-Ringen banner, `C:\bgi\Funktion.txt` and `Uppgift.txt`; BGInfo off) | x | x |
+| wallpaper | BGInfo replacement: Dator, Funktion, Uppgift (and the OKI printer IP from hosts) upper right; 10mila: the 10MILA logo lower right (oringen: the O-Ringen banner, `C:\bgi\Funktion.txt` and `Uppgift.txt`; BGInfo off) | x | x |
 | desktop | clean desktop: launch icons and a TOOLS folder, no Recycle Bin, scripts moved to TOOLS, O-Ringen program folders hidden; rows along the top | x | x |
 | taskbar | taskbar holds only the launch programs; no Search, Task view, Widgets, Chat; tray icons untouched (applies at the next sign-in) | x | x |
 

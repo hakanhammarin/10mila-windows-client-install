@@ -59,7 +59,15 @@ foreach ($e in $snap.Registry) {
 }
 $sys = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System'
 if ($snap.PSObject.Properties.Name -notcontains 'IdleLockSecs') { } elseif ($null -eq $snap.IdleLockSecs) { Remove-ItemProperty $sys InactivityTimeoutSecs -ErrorAction SilentlyContinue } else { Set-ItemProperty $sys InactivityTimeoutSecs $snap.IdleLockSecs -Type DWord }
-& cmd.exe /c "reg delete `"HKLM\SYSTEM\CurrentControlSet\Control\Print\Forms`" /v 10mila /f >nul 2>&1"
+# Our paper forms, through the spooler (deleting the registry value behind its back confuses it).
+Add-Type -Namespace W -Name Forms -MemberDefinition @'
+[StructLayout(LayoutKind.Sequential)] public struct PRINTER_DEFAULTS { public IntPtr Datatype; public IntPtr DevMode; public int DesiredAccess; }
+[DllImport("winspool.drv", CharSet = CharSet.Unicode, SetLastError = true)] public static extern bool OpenPrinter(string name, out IntPtr h, ref PRINTER_DEFAULTS d);
+[DllImport("winspool.drv", CharSet = CharSet.Unicode, SetLastError = true)] public static extern bool DeleteForm(IntPtr h, string name);
+[DllImport("winspool.drv", SetLastError = true)] public static extern bool ClosePrinter(IntPtr h);
+'@
+$hp = [IntPtr]::Zero; $pd = New-Object W.Forms+PRINTER_DEFAULTS -Property @{ DesiredAccess = 1 }
+if ([W.Forms]::OpenPrinter("\\$env:COMPUTERNAME", [ref]$hp, [ref]$pd)) { foreach ($n in '10mila', '10mila bib') { [void][W.Forms]::DeleteForm($hp, $n) }; [void][W.Forms]::ClosePrinter($hp) }
 # Single values the modules changed (values.json): back to the old value, or removed if there was none.
 if (Test-Path "$R\values.json") {
   foreach ($v in @(Get-Content -Raw "$R\values.json" | ConvertFrom-Json)) {
@@ -74,6 +82,21 @@ if (Test-Path "$R\values.json") {
     } else { & $put $v.Path }
     Write-Host "$($v.Path)\$($v.Name) $(if ($v.Present) { 'restored' } else { 'removed' })"
   }
+}
+
+# Automatic sign-in that install.ps1 switched on: its LSA secret goes too.
+$al = @(if (Test-Path "$R\values.json") { Get-Content -Raw "$R\values.json" | ConvertFrom-Json }) | Where-Object { $_.Name -eq 'AutoAdminLogon' }
+if ($al -and -not ($al.Present -and $al.Value -eq '1')) {
+  Add-Type -Namespace W -Name Lsa -MemberDefinition @'
+[StructLayout(LayoutKind.Sequential)] public struct ATTR { public int Length; public IntPtr a, b; public int c; public IntPtr d, e; }
+[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)] public struct USTR { public ushort Length, MaximumLength; public string Buffer; }
+[DllImport("advapi32.dll")] public static extern uint LsaOpenPolicy(IntPtr system, ref ATTR attr, int access, out IntPtr h);
+[DllImport("advapi32.dll")] public static extern uint LsaStorePrivateData(IntPtr h, ref USTR key, IntPtr data);
+[DllImport("advapi32.dll")] public static extern uint LsaClose(IntPtr h);
+public static uint Clear(string key) { ATTR a = new ATTR(); IntPtr h; uint r = LsaOpenPolicy(IntPtr.Zero, ref a, 0x20 | 0x800, out h); if (r != 0) return r;
+  USTR k = new USTR { Buffer = key, Length = (ushort)(key.Length * 2), MaximumLength = (ushort)(key.Length * 2 + 2) }; r = LsaStorePrivateData(h, ref k, IntPtr.Zero); LsaClose(h); return r; }
+'@
+  [void][W.Lsa]::Clear('DefaultPassword'); Write-Host 'automatic sign-in password removed'
 }
 
 Step 'Power, network adapters, firewall, hosts'

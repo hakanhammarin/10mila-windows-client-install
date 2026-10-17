@@ -42,6 +42,10 @@ namespace TenMila {
     void SetViewProperty(IntPtr pidl, IntPtr key, IntPtr v); void GetViewProperty(IntPtr pidl, IntPtr key, IntPtr v);
     void SetTileViewProperties(IntPtr pidl, string s); void SetExtendedTileViewProperties(IntPtr pidl, string s);
     void SetText(int t, string s); void SetCurrentFolderFlags(uint mask, uint flags); void GetCurrentFolderFlags(out uint flags);
+    void GetSortColumnCount(out int n); void SetSortColumns(IntPtr c, int n); void GetSortColumns(IntPtr c, int n);
+    void GetItem(int i, ref Guid riid, out IntPtr ppv); void GetVisibleItem(int start, bool previous, out int item);
+    void GetSelectedItem(int start, out int item); void GetSelection(bool none, out IntPtr items); void GetSelectionState(IntPtr pidl, out uint flags);
+    void InvokeVerbOnSelection([MarshalAs(UnmanagedType.LPStr)] string verb); void SetViewModeAndIconSize(int mode, int size);
   }
   public static class Desktop {
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)] static extern int SHGetNameFromIDList(IntPtr pidl, uint sigdn, out IntPtr name);
@@ -55,6 +59,7 @@ namespace TenMila {
       object view; ((IShellBrowser)o).QueryActiveShellView(out view);
       var fv = (IFolderView2)view;
       fv.SetCurrentFolderFlags(0x1, 0);   // auto arrange off, or the positions are ignored
+      fv.SetViewModeAndIconSize(1, 96);   // FVM_ICON, Large icons: the biggest size the desktop menu offers
       int n; fv.ItemCount(2, out n);      // SVGIO_ALLVIEW
       var items = new List<KeyValuePair<string, IntPtr>>();
       for (int i = 0; i < n; i++) { IntPtr p; fv.Item(i, out p); IntPtr s; SHGetNameFromIDList(p, 0, out s); items.Add(new KeyValuePair<string, IntPtr>(Marshal.PtrToStringUni(s), p)); Marshal.FreeCoTaskMem(s); }

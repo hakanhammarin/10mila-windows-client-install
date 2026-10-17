@@ -14,6 +14,8 @@ if ($cfg.Style -eq 'oringen') {   # same sources as Oringen.bgi: C:\bgi\Funktion
 }
 Add-Type -Namespace W -Name Dpi -MemberDefinition '[DllImport("user32.dll")] public static extern bool SetProcessDPIAware();'
 [W.Dpi]::SetProcessDPIAware() | Out-Null   # real pixels, not the scaled size at 125/150 %
+# The bib printer's address as the hosts file has it (Nummerlappar laptops).
+$oki = (Get-Content "$env:windir\System32\drivers\etc\hosts" -ErrorAction SilentlyContinue | Where-Object { $_ -match '^\s*([\d.]+)\s+OKIC542PS\s*$' } | Select-Object -Last 1) -replace '^\s*([\d.]+).*', '$1'
 $scr = [Windows.Forms.Screen]::PrimaryScreen.Bounds
 $w = [Math]::Max($scr.Width, 800); $h = [Math]::Max($scr.Height, 600)
 $bmp = New-Object Drawing.Bitmap $w, $h
@@ -33,9 +35,14 @@ $fmt = New-Object Drawing.StringFormat; $fmt.Alignment = 'Far'
 $big = New-Object Drawing.Font 'Arial', ([int]($h / 20)), ([Drawing.FontStyle]::Bold), ([Drawing.GraphicsUnit]::Pixel)
 $small = New-Object Drawing.Font 'Arial', ([int]($h / 34)), ([Drawing.FontStyle]::Regular), ([Drawing.GraphicsUnit]::Pixel)
 $m = [int]($h / 40); $y = $m
-foreach ($line in @(@("Dator: $dator", $big), @("Funktion: $funktion", $small), @("Uppgift: $uppgift", $small))) {
+foreach ($line in @(@("Dator: $dator", $big), @("Funktion: $funktion", $small), @("Uppgift: $uppgift", $small), @("Skrivare OKI: $oki", $small))) {
   if ($line[0] -match ':\s*$') { continue }   # empty value: leave the line out
   $g.DrawString($line[0], $line[1], $ink, [single]($w - $m), [single]$y, $fmt); $y += $line[1].Height * 1.15
+}
+if ($cfg.Style -ne 'oringen' -and (Test-Path 'C:\ProgramData\10mila\10mila-logo.png')) {   # 10MILA logo, lower right, above the taskbar
+  $logo = [Drawing.Image]::FromFile('C:\ProgramData\10mila\10mila-logo.png')
+  $lh = [int]($h / 4); $lw = [int]($logo.Width * $lh / $logo.Height)
+  $g.DrawImage($logo, $w - $lw - $m * 2, $h - $lh - [int]($h / 12), $lw, $lh); $logo.Dispose()
 }
 $g.Dispose()
 $out = Join-Path $env:LOCALAPPDATA '10mila-wallpaper.bmp'

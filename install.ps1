@@ -17,6 +17,8 @@ param(
   [string]$OkiDriverUrl = 'https://github.com/hakanhammarin/10mila-windows-client-install/releases/latest/download/oki-c542-ps.zip',
   [string]$PythonUrl    = 'https://www.python.org/ftp/python/3.12.10/python-3.12.10-amd64.exe',
   [string]$ReaderUrl    = 'https://ardownload2.adobe.com/pub/adobe/acrobat/win/AcrobatDC/2600222031/AcroRdrDCx642600222031_sv_SE.exe',
+  [string]$AutoLogonUser,                         # automatic sign-in: default the user signed in now; password asked for, or
+                                                  # from $env:TENMILA_AUTOLOGON_PASSWORD (a parameter would land in install.log)
   [string]$SimulateNow,                           # test the freeze windows: e.g. '2027-05-01 10:00'
   [switch]$Reboot
 )
@@ -25,9 +27,10 @@ $ProgressPreference = 'SilentlyContinue'
 
 # Profiles: which modules, in order. backup always runs first so restore.ps1 can undo the rest.
 $profiles = @{
-  '10mila'  = 'name', 'sportident', 'power', 'powerloss', 'ola', 'nummerlappar', 'receipt', 'firewall', 'update', 'wallpaper', 'desktop', 'taskbar'
-  'oringen' = 'power', 'receipt', 'firewall', 'update', 'wallpaper', 'desktop', 'taskbar'
+  '10mila'  = 'name', 'sportident', 'power', 'autologon', 'powerloss', 'ola', 'nummerlappar', 'receipt', 'firewall', 'update', 'wallpaper', 'desktop', 'taskbar'
+  'oringen' = 'power', 'autologon', 'receipt', 'firewall', 'update', 'wallpaper', 'desktop', 'taskbar'
 }
+$Modules = @($Modules | ForEach-Object { $_ -split ',' } | Where-Object { $_ })   # powershell -File passes a,b as one string
 if (-not $Modules) { $Modules = $profiles[$Setup] }
 if (-not $Modules) { throw "unknown profile $Setup (known: $($profiles.Keys -join ', '))" }
 

@@ -4,6 +4,7 @@ Step 'Wallpaper'
 $style = if ($Setup -eq 'oringen') { 'oringen' } else { '10mila' }
 [pscustomobject]@{ Style = $style } | ConvertTo-Json | Set-Content "$Data\wallpaper.json"
 Get-File "$BaseUrl/files/wallpaper.ps1" "$Data\wallpaper.ps1" | Out-Null
+Get-File "$BaseUrl/files/10mila-logo.png" "$Data\10mila-logo.png" | Out-Null
 # The first version set a machine wallpaper policy; it would hide the per-user wallpaper.
 $csp = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP'
 if ((Get-ItemProperty $csp -ErrorAction SilentlyContinue).DesktopImagePath -like "$Data\*") { Remove-Item -Recurse -Force $csp }
