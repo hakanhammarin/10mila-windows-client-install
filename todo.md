@@ -61,3 +61,5 @@ O-Ringen readout laptop TA31 (10.0.0.40, Windows 10 Enterprise, user funktionar)
 - [x] Wallpaper: "Skrivare OKI: <ip>" from hosts; 10MILA logo (Tranås 2026) lower right on the 10mila style. Desktop icons Large.
 - [x] Automatic sign-in (LSA secret DefaultPassword, Winlogon values saved for restore; restore clears the secret). PASS on .37.
 - [ ] Give the token write access to 10mila_bib_print_via_acrobat_reader_on_windows, or merge the descending loop there.
+- [x] Wallpaper shows "Brandvägg event: PÅ/AV"; the switch redraws it. SIRAP TCP 10001 inbound rule in group 10mila (kept when the event firewall is on). Region module: W. Europe Standard Time, sv-SE, GeoId 221 (system locale after restart).
+- [x] Taskbar pins: .bat programs are pinned through cmd.exe (the taskbar refuses .bat targets, so the first layout showed no pins).

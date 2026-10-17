@@ -27,8 +27,8 @@ $ProgressPreference = 'SilentlyContinue'
 
 # Profiles: which modules, in order. backup always runs first so restore.ps1 can undo the rest.
 $profiles = @{
-  '10mila'  = 'name', 'sportident', 'power', 'autologon', 'powerloss', 'ola', 'nummerlappar', 'receipt', 'firewall', 'update', 'wallpaper', 'desktop', 'taskbar'
-  'oringen' = 'power', 'autologon', 'receipt', 'firewall', 'update', 'wallpaper', 'desktop', 'taskbar'
+  '10mila'  = 'name', 'region', 'sportident', 'power', 'autologon', 'powerloss', 'ola', 'nummerlappar', 'receipt', 'firewall', 'update', 'wallpaper', 'desktop', 'taskbar'
+  'oringen' = 'region', 'power', 'autologon', 'receipt', 'firewall', 'update', 'wallpaper', 'desktop', 'taskbar'
 }
 $Modules = @($Modules | ForEach-Object { $_ -split ',' } | Where-Object { $_ })   # powershell -File passes a,b as one string
 if (-not $Modules) { $Modules = $profiles[$Setup] }

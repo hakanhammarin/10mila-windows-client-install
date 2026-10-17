@@ -7,8 +7,13 @@ $sh = New-Object -ComObject WScript.Shell
 $desks = @("$env:PUBLIC\Desktop") + @(Get-ChildItem C:\Users -Directory | Where-Object Name -ne 'Public' | ForEach-Object { "$($_.FullName)\Desktop" } | Where-Object { Test-Path $_ })
 $pins = foreach ($f in $desks | ForEach-Object { Get-ChildItem $_ -File -ErrorAction SilentlyContinue } | Where-Object Extension -in '.lnk', '.bat', '.cmd') {
   $to = "$menu\$($f.BaseName).lnk"
-  if ($f.Extension -eq '.lnk') { Copy-Item -Force $f.FullName $to }
-  else { $sc = $sh.CreateShortcut($to); $sc.TargetPath = $f.FullName; $sc.WorkingDirectory = $f.DirectoryName; $sc.WindowStyle = 7; $sc.IconLocation = "$env:windir\System32\shell32.dll,24"; $sc.Save() }
+  # The taskbar pins only programs, not .bat/.cmd files: those are started through cmd.exe, which can be pinned.
+  if ($f.Extension -eq '.lnk') { $src = $sh.CreateShortcut($f.FullName); $target = $src.TargetPath; $wd = $src.WorkingDirectory; $icon = $src.IconLocation; $arg = $src.Arguments }
+  else { $target = $f.FullName; $wd = $f.DirectoryName; $icon = "$env:windir\System32\shell32.dll,24"; $arg = '' }
+  if (-not $icon -or $icon -match '^,') { $jw = Join-Path (Split-Path $target) 'javaw.exe'; $icon = if (Test-Path $jw) { "$jw,0" } else { "$env:windir\System32\shell32.dll,24" } }   # OLA's java icon
+  $sc = $sh.CreateShortcut($to); $sc.WorkingDirectory = $wd; $sc.WindowStyle = 7; $sc.IconLocation = $icon
+  if ($target -match '\.(bat|cmd)$') { $sc.TargetPath = $env:ComSpec; $sc.Arguments = "/c `"`"$target`" $arg`"" } else { $sc.TargetPath = $target; $sc.Arguments = $arg }
+  $sc.Save()
   $to
 }
 $xml = @"

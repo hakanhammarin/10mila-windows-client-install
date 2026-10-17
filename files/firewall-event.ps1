@@ -1,5 +1,5 @@
 # firewall-event.ps1 - event firewall on/off (desktop icon). No argument = toggle; or "on" / "off" / "status".
-# On:  inbound only ssh (TCP 22), PowerLoss (TCP 3000, mDNS UDP 5353) and Windows core networking (DHCP answers, IPv6 ND);
+# On:  inbound only ssh (TCP 22), PowerLoss (TCP 3000, mDNS UDP 5353), the permanent 10mila rules (SIRAP TCP 10001) and Windows core networking (DHCP answers, IPv6 ND);
 #      every outbound allow rule Windows ships is switched off and one rule allows the private addresses only
 #      (RFC 1918, link-local, multicast, broadcast): no internet, so no updates.
 # Off: the profiles and the rules exactly as they were before "on".
@@ -39,6 +39,7 @@ if ($Mode -eq 'on') {
   } catch {   # half on is worse than off: undo and say so
     $err = $_; & $PSCommandPath -Mode off -Quiet; Say "Event firewall NOT switched on: $err"; exit 1
   }
+  Start-ScheduledTask -TaskName '10mila wallpaper' -ErrorAction SilentlyContinue   # the status line on the desktop
   Say 'Event firewall is ON: only the local network, no internet.'
 } else {
   if (-not $isOn) { Say 'Event firewall is already OFF'; return }
@@ -47,5 +48,6 @@ if ($Mode -eq 'on') {
   foreach ($p in $s.Profiles) { Set-NetFirewallProfile -Name $p.Name -Enabled $p.Enabled -DefaultInboundAction $p.In -DefaultOutboundAction $p.Out }
   if ($s.Disabled) { Enable-NetFirewallRule -Name @($s.Disabled) -ErrorAction SilentlyContinue }
   Remove-Item $state
+  Start-ScheduledTask -TaskName '10mila wallpaper' -ErrorAction SilentlyContinue   # the status line on the desktop
   Say 'Event firewall is OFF: back to normal.'
 }

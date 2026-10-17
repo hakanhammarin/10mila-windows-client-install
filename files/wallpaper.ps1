@@ -16,6 +16,7 @@ Add-Type -Namespace W -Name Dpi -MemberDefinition '[DllImport("user32.dll")] pub
 [W.Dpi]::SetProcessDPIAware() | Out-Null   # real pixels, not the scaled size at 125/150 %
 # The bib printer's address as the hosts file has it (Nummerlappar laptops).
 $oki = (Get-Content "$env:windir\System32\drivers\etc\hosts" -ErrorAction SilentlyContinue | Where-Object { $_ -match '^\s*([\d.]+)\s+OKIC542PS\s*$' } | Select-Object -Last 1) -replace '^\s*([\d.]+).*', '$1'
+$fw = if (Test-Path 'C:\ProgramData\10mila\firewall-event.ps1') { "Brandv$([char]0xE4)gg event: " + $(if (Test-Path 'C:\ProgramData\10mila\firewall-event.json') { "P$([char]0xC5) (inget internet)" } else { 'AV' }) }
 $scr = [Windows.Forms.Screen]::PrimaryScreen.Bounds
 $w = [Math]::Max($scr.Width, 800); $h = [Math]::Max($scr.Height, 600)
 $bmp = New-Object Drawing.Bitmap $w, $h
@@ -35,7 +36,7 @@ $fmt = New-Object Drawing.StringFormat; $fmt.Alignment = 'Far'
 $big = New-Object Drawing.Font 'Arial', ([int]($h / 20)), ([Drawing.FontStyle]::Bold), ([Drawing.GraphicsUnit]::Pixel)
 $small = New-Object Drawing.Font 'Arial', ([int]($h / 34)), ([Drawing.FontStyle]::Regular), ([Drawing.GraphicsUnit]::Pixel)
 $m = [int]($h / 40); $y = $m
-foreach ($line in @(@("Dator: $dator", $big), @("Funktion: $funktion", $small), @("Uppgift: $uppgift", $small), @("Skrivare OKI: $oki", $small))) {
+foreach ($line in @(@("Dator: $dator", $big), @("Funktion: $funktion", $small), @("Uppgift: $uppgift", $small), @("Skrivare OKI: $oki", $small), @($fw, $small))) {
   if ($line[0] -match ':\s*$') { continue }   # empty value: leave the line out
   $g.DrawString($line[0], $line[1], $ink, [single]($w - $m), [single]$y, $fmt); $y += $line[1].Height * 1.15
 }

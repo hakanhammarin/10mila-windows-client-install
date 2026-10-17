@@ -99,6 +99,14 @@ public static uint Clear(string key) { ATTR a = new ATTR(); IntPtr h; uint r = L
   [void][W.Lsa]::Clear('DefaultPassword'); Write-Host 'automatic sign-in password removed'
 }
 
+if (Test-Path "$R\region.json") {   # time zone, region, locale as they were
+  $rg = Get-Content -Raw "$R\region.json" | ConvertFrom-Json
+  Set-TimeZone -Id $rg.TimeZone; Set-WinHomeLocation -GeoId $rg.HomeGeo
+  if ((Get-WinSystemLocale).Name -ne $rg.SystemLocale) { Set-WinSystemLocale $rg.SystemLocale }
+  if ($env:USERNAME -eq $rg.User) { Set-Culture $rg.Culture }
+  Write-Host "time zone $($rg.TimeZone), region $($rg.HomeGeo), locale $($rg.SystemLocale)"
+}
+
 Step 'Power, network adapters, firewall, hosts'
 foreach ($v in $snap.PowerValues) {
   & cmd.exe /c "powercfg /setacvalueindex $($snap.PowerScheme) $($v.Setting) $($v.AC) >nul 2>&1"
