@@ -4,6 +4,13 @@ Sets up crew laptops for 10MILA, and parts of it for the O-Ringen laptops, from 
 
 ## Run
 
+**Easiest:** download and double-click (Windows asks for administrator):
+[10MILA-install.cmd](https://github.com/hakanhammarin/10mila-windows-client-install/releases/latest/download/10MILA-install.cmd),
+[O-Ringen-install.cmd](https://github.com/hakanhammarin/10mila-windows-client-install/releases/latest/download/O-Ringen-install.cmd),
+[Restore.cmd](https://github.com/hakanhammarin/10mila-windows-client-install/releases/latest/download/Restore.cmd),
+[Enable-ssh.cmd](https://github.com/hakanhammarin/10mila-windows-client-install/releases/latest/download/Enable-ssh.cmd).
+They fetch the newest scripts from git each time.
+
 **PowerShell** (Windows 10 and 11, a normal window is enough: it asks for administrator itself):
 
 ```
