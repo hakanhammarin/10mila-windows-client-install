@@ -35,7 +35,7 @@ if ((Get-ItemProperty $e -ErrorAction SilentlyContinue).NewTabPageLocation -like
 # Edge updates put "Microsoft Edge" back on the desktop: not on these desktops (Edge is on the start page and the taskbar).
 Set-Value 'HKLM:\SOFTWARE\Policies\Microsoft\EdgeUpdate' 'CreateDesktopShortcutDefault' 0
 Set-Value 'HKLM:\SOFTWARE\Policies\Microsoft\EdgeUpdate' 'CreateDesktopShortcut{56EB18F8-B008-4CBD-B6D2-8C97FE7E9062}' 0
-Remove-Item "$env:PUBLIC\Desktop\Microsoft Edge.lnk" -Force -ErrorAction SilentlyContinue
+Get-ChildItem "$env:PUBLIC\Desktop\Microsoft Edge.lnk", "C:\Users\*\Desktop\Microsoft Edge.lnk" -ErrorAction SilentlyContinue | Remove-Item -Force
 # Favorites: the same buttons as a managed folder on the favorites bar; the old personal favorites move to the restore folder.
 $fav = @(@{ toplevel_name = $v.TITLE }) + @($links | ForEach-Object { @{ name = $_[0]; url = $_[1] } })
 Set-Value $e ManagedFavorites (ConvertTo-Json -InputObject $fav -Compress) 'String'

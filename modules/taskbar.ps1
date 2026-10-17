@@ -5,7 +5,7 @@ $menu = 'C:\ProgramData\Microsoft\Windows\Start Menu\Programs\10MILA'   # taskba
 Remove-Item -Recurse -Force $menu -ErrorAction SilentlyContinue; New-Item -ItemType Directory -Force $menu | Out-Null
 $sh = New-Object -ComObject WScript.Shell
 $desks = @("$env:PUBLIC\Desktop") + @(Get-ChildItem C:\Users -Directory | Where-Object Name -ne 'Public' | ForEach-Object { "$($_.FullName)\Desktop" } | Where-Object { Test-Path $_ })
-$pins = foreach ($f in $desks | ForEach-Object { Get-ChildItem $_ -File -ErrorAction SilentlyContinue } | Where-Object Extension -in '.lnk', '.bat', '.cmd') {
+$pins = foreach ($f in $desks | ForEach-Object { Get-ChildItem $_ -File -ErrorAction SilentlyContinue } | Where-Object { $_.Extension -in '.lnk', '.bat', '.cmd' -and $_.BaseName -ne 'Microsoft Edge' }) {   # Edge gets its own button below
   $to = "$menu\$($f.BaseName).lnk"
   # The taskbar pins only programs, not .bat/.cmd files: those are started through cmd.exe, which can be pinned.
   if ($f.Extension -eq '.lnk') { $src = $sh.CreateShortcut($f.FullName); $target = $src.TargetPath; $wd = $src.WorkingDirectory; $icon = $src.IconLocation; $arg = $src.Arguments }
