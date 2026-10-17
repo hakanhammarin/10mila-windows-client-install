@@ -5,7 +5,8 @@
 param(
   [Alias('Profile')][string]$Setup = '10mila',    # -Profile 10mila | oringen (see $profiles below)
   [string[]]$Modules,                             # run only these modules, e.g. -Modules firewall,receipt
-  [string]$Name,                                  # 10mila: e.g. TA-03; empty = pick from the list
+  [string]$Name,                                  # 10mila: a full name (TA-7K2P) to keep; empty = pick the function, random suffix
+  [string]$Function,                              # 10mila: the function from computers.csv, e.g. "Check IN" (no question)
   [string]$Uppgift = '',                          # 10mila: the "Uppgift" line on the wallpaper (empty = none)
   [string]$OlaServer = '192.168.1.21',            # OLA server on the race network
   [string]$OlaEvent  = "Tiomila, Tran$([char]0xE5)s (Stafettligan, #3)",   # event name on the OLA server (2026); file stays ASCII for PowerShell 5.1

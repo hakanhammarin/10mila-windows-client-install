@@ -25,7 +25,7 @@ curl -fsSLo %TEMP%\10mila.ps1 https://raw.githubusercontent.com/hakanhammarin/10
 
 In PowerShell `curl` is Invoke-WebRequest and `&&` does not exist in Windows PowerShell 5.1: use `curl.exe` and `;` as above.
 
-10MILA laptop: pick the function and the number on the laptop's label. O-Ringen laptop: add `-Profile oringen`. The script ends in PASS or FAILED (log: `C:\ProgramData\10mila\install.log`). Running it again is safe.
+10MILA laptop: pick the function; the name is its prefix and a random suffix (READOUT-7K2P), so PowerLoss shows at once where a power cut is. O-Ringen laptop: add `-Profile oringen`. The script ends in PASS or FAILED (log: `C:\ProgramData\10mila\install.log`). Running it again is safe.
 
 Back to how it was (O-Ringen layout, BGInfo, firewall, power, name):
 
@@ -38,7 +38,7 @@ curl -fsSLo %TEMP%\restore.ps1 https://raw.githubusercontent.com/hakanhammarin/1
 | Module | What it does | 10mila | oringen |
 |---|---|---|---|
 | backup | saves registry, power, firewall, hosts, OLA6, startup and desktops once, for restore.ps1 | always | always |
-| name | computer name picker by function (`computers.csv`) | x | |
+| name | function picker (`computers.csv`); name = function prefix + random 4-character suffix, kept on later updates | x | |
 | region | time zone Stockholm, Swedish date/time format, region Sweden; clock synced | x | x |
 | teams | Microsoft Teams removed (classic, machine-wide, new Teams, Windows 11 chat) and kept out | x | x |
 | sportident | SPORTident signed USB driver (2026-06-09), old 2014 driver removed | x | x |
@@ -62,7 +62,7 @@ curl -fsSLo %TEMP%\restore.ps1 https://raw.githubusercontent.com/hakanhammarin/1
 
 Run single modules with `-Modules firewall,receipt`.
 
-**Freeze windows:** `freeze.csv` lists date-time windows (race weekend, rehearsal) when install and update refuse to run (exit 3, nothing changed). Test with `-SimulateNow "2027-05-01 10:00"`. The event firewall blocks GitHub anyway while it is on. Options: `-Name TA-03`, `-Uppgift "..."`, `-OlaServer 192.168.1.21`, `-OlaEvent "..."`, `-OlaVersion 6.6.2`, `-Reboot`, `-BaseUrl` / `-ReleaseUrl` (test from another host).
+**Freeze windows:** `freeze.csv` lists date-time windows (race weekend, rehearsal) when install and update refuse to run (exit 3, nothing changed). Test with `-SimulateNow "2027-05-01 10:00"`. The event firewall blocks GitHub anyway while it is on. Options: `-Function "Check IN"`, `-Name TA-7K2P` (keep a name), `-Uppgift "..."`, `-OlaServer 192.168.1.21`, `-OlaEvent "..."`, `-OlaVersion 6.6.2`, `-Reboot`, `-BaseUrl` / `-ReleaseUrl` (test from another host).
 
 ## Files
 
