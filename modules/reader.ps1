@@ -1,6 +1,7 @@
 # reader.ps1 - Adobe Acrobat Reader on every laptop, the default for PDF (Edge prints PDFs badly), without the extras:
 # no AI assistant, upsell, cloud services, sign-in, welcome screen, messages or updater.
 Step 'Acrobat Reader, default for PDF'
+if ($me.Prefix -eq 'READOUT') { Write-Host 'readout laptop: no Acrobat Reader needed'; return }   # 10mila readout (UT) prints no PDFs
 $acro = 'C:\Program Files\Adobe\Acrobat DC\Acrobat\Acrobat.exe'   # the path acrobat_print_2.py uses
 if (-not (Test-Path $acro)) {   # ~790 MB; no EULA flag: it is accepted at the first start
   Start-Process -Wait (Get-File $ReaderUrl "$Tmp\reader.exe") '/sAll /rs /msi /norestart ALLUSERS=1 DISABLEDESKTOPSHORTCUT=1'
