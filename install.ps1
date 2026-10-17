@@ -70,7 +70,7 @@ function Invoke-Msi([string]$arguments) {
 }
 function Step($text) { Write-Host "`n== $text" -ForegroundColor Cyan }
 $Checks = New-Object Collections.Generic.List[scriptblock]
-function Add-Check([scriptblock]$test) { $Checks.Add($test) }   # the block returns @(text, passed)
+function Add-Check([scriptblock]$test) { $Checks.Add($test) }   # returns @(text, passed); runs at the end, so use names no later module reuses
 # Run $do with each user profile's registry hive (Default included); a logged-on user's live hive is used as it is.
 function ForEach-UserHive([scriptblock]$do) {
   foreach ($u in Get-ChildItem 'C:\Users' -Directory -Force | Where-Object { -not ($_.Attributes -band [IO.FileAttributes]::ReparsePoint) -and (Test-Path "$($_.FullName)\NTUSER.DAT") }) {

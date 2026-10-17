@@ -18,17 +18,17 @@ foreach ($v in @(@($fl, 'bAcroSuppressUpsell', 1), @($fl, 'bEnableGentech', 0), 
 }
 Get-Service AdobeARMservice -ErrorAction SilentlyContinue | ForEach-Object { Stop-Service $_ -Force -ErrorAction SilentlyContinue; Set-Service $_.Name -StartupType Disabled }   # updater service
 # Default for .pdf for every user, as policy (applied at each sign-in; Windows does not let a script set the user's choice).
-$xml = "$Data\default-apps.xml"
-Set-Content -Encoding UTF8 $xml @'
+$defaultApps = "$Data\default-apps.xml"
+Set-Content -Encoding UTF8 $defaultApps @'
 <?xml version="1.0" encoding="UTF-8"?>
 <DefaultAssociations>
   <Association Identifier=".pdf" ProgId="Acrobat.Document.DC" ApplicationName="Adobe Acrobat" />
 </DefaultAssociations>
 '@
-Set-Value 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\System' DefaultAssociationsConfiguration $xml 'String'
+Set-Value 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\System' DefaultAssociationsConfiguration $defaultApps 'String'
 Add-Check {
   $miss = @()
   if (-not (Test-Path $acro)) { $miss += 'Reader' }
-  if ((Get-ItemProperty 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\System' -ErrorAction SilentlyContinue).DefaultAssociationsConfiguration -ne $xml) { $miss += 'PDF default' }
+  if ((Get-ItemProperty 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\System' -ErrorAction SilentlyContinue).DefaultAssociationsConfiguration -ne $defaultApps) { $miss += 'PDF default' }
   if ((Get-ItemProperty $fl -ErrorAction SilentlyContinue).bEnableGentech -ne 0) { $miss += 'policies' }
   @("Acrobat Reader, default for .pdf at sign-in, extras off$(if ($miss) { ' - missing: ' + ($miss -join ', ') })", ($miss.Count -eq 0)) }
