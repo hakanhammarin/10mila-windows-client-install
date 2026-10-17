@@ -81,3 +81,4 @@ O-Ringen readout laptop TA31 (10.0.0.40, Windows 10 Enterprise, user funktionar)
 - [ ] .46 (user funktionär): not reachable yet (no ping, no ssh). Then: O-Ringen profile with -KeepOnDesktop deltagarservice.
 - [x] Battery estimate: every 10 min on battery (>= 10 min and 3 % drop) estimate.json with time left and time from full, on the wallpaper; the closed run keeps FullMinutes ("räcker ca 3 h 20 min från full", simulated on .37).
 - [x] SportIdent signed driver in the O-Ringen profile too; old 2014 packages (sivcp.inf/silabenm.inf, older SPORTident) removed. Rensa profil also removes Microsoft accounts (IdentityCRL, TokenBroker) and the Edge/Chrome profile: cleared gary.jonforsen@outlook.com on .46.
+- [x] AutoPlay/AutoRun off in both profiles (NoDriveTypeAutoRun 255, NoAutorun, NoAutoplayfornonVolume, per-user DisableAutoplay; values saved for restore). PASS on .46.
