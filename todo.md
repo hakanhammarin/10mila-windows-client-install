@@ -30,3 +30,16 @@ One elevated cmd line per laptop (README.md), about 40 laptops, run by crew memb
 - [x] SOFT changed the UpgradeCode (6.5.0 {6B1C5800-...}, 6.6.2 {C1216E3E-...}): the MSI installs beside 6.5, not over it. install.ps1 now removes every other "OLA 6" version (`msiexec /x` product code) and then installs the wanted one with REINSTALL=ALL REINSTALLMODE=amus, because the removal takes shared files and the start menu shortcut with it. The check caught the side by side install (two entries).
 - [x] Tested on 10.0.0.37: 6.6.2 -> 6.5.0 (rollback) PASS, 6.5.0 -> 6.6.2 PASS, rerun 6.6.2 PASS (MSI skipped); the desktop icon starts 6.6.2.
 - [ ] Servers to 6.6.2 and the SQL migration: the `upgrade` agent (ola-upgrade.sh), not this repo.
+
+## Modules, O-Ringen profile and restore (2026-10-17)
+
+O-Ringen readout laptop TA31 (10.0.0.40, Windows 10 Enterprise, user funktionar): BGInfo from C:\bgi (Oringen.bgi: "Dator: <Host Name>", Funktion and Uppgift from C:\bgi\Funktion.txt / Uppgift.txt, banner o_ringen_cover.jpg), old OLA client in Desktop\OLA-klient and TA-klient (settings in C:\ProgramData\OLA6), Star TSP100 Cutter (TSP143) on USB, driver smjt100.inf. Copies in collected/oringen-ta31 (gitignored).
+
+- [x] install.ps1 split into modules/ with profiles 10mila and oringen; backup module (first run only) and restore.ps1.
+- [x] BGInfo off on TA31 (startup BGI.cmd kept in the restore folder); wallpaper module draws Dator, Funktion, Uppgift upper right at every logon (per user, DPI aware, fill).
+- [x] Desktop icons in rows along the top at logon (IFolderView, launch icons first); TA-Klient icon added for the MSI install.
+- [x] Receipt: Star driver from the release; watcher task prints "Hello world" on 72 mm receipt paper at boot and on plug-in. Printed on TA31.
+- [x] Event firewall switch (desktop icon, asks for UAC): on = inbound ssh, PowerLoss, mDNS, core networking; outbound only RFC 1918/link-local/multicast; internet blocked by a block rule. Tested on 10.0.0.37: internet blocked, LAN, ssh and PowerLoss ok; off restores profiles and the 95 rules it disabled. Switching over ssh drops that ssh session (start it detached if done remotely).
+- [x] Restore tested on TA31: tasks, rules, policies, wallpaper, icon layout and BGInfo back. Lesson: never delete-and-reimport a shared key (Policies\System holds UAC); only keys we own.
+- [ ] O-Ringen bib printing with the OLA MSI: bib PDFs are relative to the start folder (Desktop\OLA-klient via OLA.bat). Validate on a print laptop before O-Ringen uses the MSI.
+- [ ] Check the desktop icon "Brandvägg event" with a person at the screen (UAC prompt, message box).

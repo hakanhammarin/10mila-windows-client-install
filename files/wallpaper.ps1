@@ -1,0 +1,46 @@
+# wallpaper.ps1 - BGInfo replacement, run at every logon in the user's session (task "10mila wallpaper").
+# Draws Dator, Funktion and Uppgift in the upper right corner and sets it as this user's wallpaper.
+# Style from C:\ProgramData\10mila\wallpaper.json: 10mila = plain light grey, oringen = O-Ringen banner (C:\bgi\o_ringen_cover.jpg).
+$ErrorActionPreference = 'Stop'
+Add-Type -AssemblyName System.Drawing, System.Windows.Forms
+$cfg = Get-Content -Raw 'C:\ProgramData\10mila\wallpaper.json' | ConvertFrom-Json
+$dator = (Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName').ComputerName   # the name after a pending rename
+function First-Line($file) { if (Test-Path $file) { (Get-Content $file -Encoding Default | Where-Object { $_.Trim() } | Select-Object -First 1) } }
+if ($cfg.Style -eq 'oringen') {   # same sources as Oringen.bgi: C:\bgi\Funktion.txt and Uppgift.txt (ANSI)
+  $funktion = First-Line 'C:\bgi\Funktion.txt'; $uppgift = First-Line 'C:\bgi\Uppgift.txt'
+} else {
+  $c = Get-Content -Raw 'C:\ProgramData\10mila\client.json' -ErrorAction SilentlyContinue | ConvertFrom-Json
+  $funktion = $c.Function; $uppgift = $c.Uppgift
+}
+Add-Type -Namespace W -Name Dpi -MemberDefinition '[DllImport("user32.dll")] public static extern bool SetProcessDPIAware();'
+[W.Dpi]::SetProcessDPIAware() | Out-Null   # real pixels, not the scaled size at 125/150 %
+$scr = [Windows.Forms.Screen]::PrimaryScreen.Bounds
+$w = [Math]::Max($scr.Width, 800); $h = [Math]::Max($scr.Height, 600)
+$bmp = New-Object Drawing.Bitmap $w, $h
+$g = [Drawing.Graphics]::FromImage($bmp)
+$g.TextRenderingHint = 'AntiAliasGridFit'; $g.InterpolationMode = 'HighQualityBicubic'
+if ($cfg.Style -eq 'oringen' -and (Test-Path 'C:\bgi\o_ringen_cover.jpg')) {
+  $img = [Drawing.Image]::FromFile('C:\bgi\o_ringen_cover.jpg')
+  $g.Clear(([Drawing.Bitmap]$img).GetPixel(2, $img.Height - 2))   # the banner's own background colour
+  $ih = [int]($img.Height * $w / $img.Width)
+  $src = New-Object Drawing.Rectangle 3, 3, ($img.Width - 6), ($img.Height - 6)   # skip the jpg's light 1-2 px border
+  $g.DrawImage($img, (New-Object Drawing.Rectangle 0, ([int](($h - $ih) / 2)), $w, $ih), $src, [Drawing.GraphicsUnit]::Pixel); $img.Dispose()
+} else {
+  $g.Clear([Drawing.Color]::FromArgb(190, 190, 190))   # light grey: icons stand out, not bright at night
+}
+$ink = New-Object Drawing.SolidBrush ([Drawing.Color]::FromArgb(30, 30, 30))
+$fmt = New-Object Drawing.StringFormat; $fmt.Alignment = 'Far'
+$big = New-Object Drawing.Font 'Arial', ([int]($h / 20)), ([Drawing.FontStyle]::Bold), ([Drawing.GraphicsUnit]::Pixel)
+$small = New-Object Drawing.Font 'Arial', ([int]($h / 34)), ([Drawing.FontStyle]::Regular), ([Drawing.GraphicsUnit]::Pixel)
+$m = [int]($h / 40); $y = $m
+foreach ($line in @(@("Dator: $dator", $big), @("Funktion: $funktion", $small), @("Uppgift: $uppgift", $small))) {
+  if ($line[0] -match ':\s*$') { continue }   # empty value: leave the line out
+  $g.DrawString($line[0], $line[1], $ink, [single]($w - $m), [single]$y, $fmt); $y += $line[1].Height * 1.15
+}
+$g.Dispose()
+$out = Join-Path $env:LOCALAPPDATA '10mila-wallpaper.bmp'
+$bmp.Save($out, [Drawing.Imaging.ImageFormat]::Bmp); $bmp.Dispose()
+Set-ItemProperty 'HKCU:\Control Panel\Desktop' WallpaperStyle '10'   # fill: also right after a resolution change
+Set-ItemProperty 'HKCU:\Control Panel\Desktop' TileWallpaper '0'
+Add-Type -Namespace W -Name Desk -MemberDefinition '[DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern int SystemParametersInfo(int a, int b, string c, int d);'
+[W.Desk]::SystemParametersInfo(20, 0, $out, 3) | Out-Null   # SPI_SETDESKWALLPAPER, update ini + broadcast
