@@ -6,7 +6,7 @@ param(
   [string]$Name,                                  # e.g. TA-03; empty = pick from the list
   [string]$OlaServer = '192.168.1.21',            # OLA server on the race network
   [string]$OlaEvent  = "Tiomila, Tran$([char]0xE5)s (Stafettligan, #3)",   # event name on the OLA server (2026); file stays ASCII for PowerShell 5.1
-  [string]$OlaVersion = '6.5.0',                  # SOFT_OLA-<version>.msi in the release
+  [string]$OlaVersion = '6.6.2',                  # SOFT_OLA-<version>.msi in the release
   [string]$BaseUrl    = 'https://raw.githubusercontent.com/hakanhammarin/10mila-windows-client-install/main',
   [string]$ReleaseUrl = 'https://github.com/hakanhammarin/10mila-windows-client-install/releases/latest/download',
   [string]$SiDriverUrl = 'https://sportident.com/download/sportident-usb-driver.2026.06.09.zip',  # signed, works on 24H2+
@@ -120,13 +120,23 @@ Get-NetFirewallRule -DisplayName '10mila PowerLoss' -ErrorAction SilentlyContinu
 New-NetFirewallRule -DisplayName '10mila PowerLoss' -Direction Inbound -Program "$pl\powerloss-agent.exe" -Action Allow -Profile Any | Out-Null
 Start-ScheduledTask -TaskName '10mila PowerLoss'
 
-# --- 5. OLA client 6.5.0 (SOFT's MSI, silent) ------------------------------
+# --- 5. OLA client (SOFT's MSI, silent) -------------------------------------
 Step 'OLA client'
-$ola = 'C:\Program Files\OLA 6'; $olaCfg = 'C:\ProgramData\OLA6'   # 6.5 reads its settings from ProgramData
-$have = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*' -ErrorAction SilentlyContinue | Where-Object DisplayName -eq 'OLA 6'
-if ($have.DisplayVersion -ne $OlaVersion) {   # same version installed: keep it (it may be open)
+$ola = 'C:\Program Files\OLA 6'; $olaCfg = 'C:\ProgramData\OLA6'   # 6.5+ reads its settings from ProgramData
+$all = @(Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*' -ErrorAction SilentlyContinue | Where-Object DisplayName -eq 'OLA 6')
+$others = @($all | Where-Object DisplayVersion -ne $OlaVersion)
+$have = @($all | Where-Object DisplayVersion -eq $OlaVersion).Count -gt 0
+if ($others -or -not $have) {   # same version alone: keep it (it may be open)
   $msi = Get-File "$ReleaseUrl/SOFT_OLA-$OlaVersion.msi" "$Tmp\ola.msi"
-  $p = Start-Process msiexec.exe -Wait -PassThru -ArgumentList "/i `"$msi`" /qn /norestart /l*v `"$Data\ola-msi.log`""
+  Get-CimInstance Win32_Process | Where-Object ExecutablePath -like "$ola\*" | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
+  # SOFT changes the UpgradeCode between versions (6.5.0 -> 6.6.2), so the MSI does not replace the old one: remove it first.
+  foreach ($o in $others) {
+    $p = Start-Process msiexec.exe -Wait -PassThru -ArgumentList "/x $($o.PSChildName) /qn /norestart"
+    if ($p.ExitCode -notin 0, 3010, 1605) { throw "removing OLA $($o.DisplayVersion) failed: exit $($p.ExitCode)" }
+  }
+  # Both share C:\Program Files\OLA 6 and the start menu: after removing the other version, reinstall the wanted one in full.
+  $msiArgs = "/i `"$msi`"" + $(if ($have) { ' REINSTALL=ALL REINSTALLMODE=amus' } else { '' })
+  $p = Start-Process msiexec.exe -Wait -PassThru -ArgumentList "$msiArgs /qn /norestart /l*v `"$Data\ola-msi.log`""
   if ($p.ExitCode -notin 0, 3010) { throw "OLA msi failed: exit $($p.ExitCode), see $Data\ola-msi.log" }
 }
 if (Test-Path 'C:\OLA-Klient\.installed') { Remove-Item -Recurse -Force 'C:\OLA-Klient' -ErrorAction SilentlyContinue }   # the 6.4 zip install of the first test runs
