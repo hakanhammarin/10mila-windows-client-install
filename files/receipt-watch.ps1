@@ -22,6 +22,7 @@ function Print-Hello {
     foreach ($l in @(@('Hello world', $big), @("$env:COMPUTERNAME  $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')", $small), @($q.Name, $small))) {
       $e.Graphics.DrawString($l[0], $l[1], [Drawing.Brushes]::Black, 0, $y); $y += $l[1].GetHeight($e.Graphics) + 4
     }
+    $e.Graphics.DrawString('.', $small, [Drawing.Brushes]::Black, 0, $y + 79)   # 20 mm feed (79/100 inch): the driver cuts after the last mark
     $e.HasMorePages = $false
   })
   try { $doc.Print(); Add-Content $log "$(Get-Date -Format s) printed on $($q.Name)" } catch { Add-Content $log "$(Get-Date -Format s) print failed: $_" }

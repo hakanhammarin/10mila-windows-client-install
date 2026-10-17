@@ -30,11 +30,15 @@ curl -fsSLo %TEMP%\restore.ps1 https://raw.githubusercontent.com/hakanhammarin/1
 | ola | OLA from SOFT's MSI, properties in `C:\ProgramData\OLA6`, OLA-Klient and TA-Klient icons | x | |
 | nummerlappar | bib printing station on PRINT-xx (OKI C542 PS, Python, Acrobat Reader, `C:\bibs`) | x | |
 | receipt | Star TSP143 driver; "Hello world" on 72 mm paper at boot and when plugged in | x | x |
-| firewall | desktop icon "Brandvägg event": on = only local network in and out, no internet | x | x |
+| firewall | "Brandvägg event" in TOOLS: on = every Windows allow rule off, in only ssh/PowerLoss/mDNS/DHCP, out only private ranges; no internet | x | x |
+| update | "10MILA UPDATE" in TOOLS and at every boot: the one-liner again with this laptop's choices (`C:\ProgramData\10mila\profile.json`) and the versions in git | x | x |
 | wallpaper | BGInfo replacement: Dator, Funktion, Uppgift upper right (oringen: the O-Ringen banner, `C:\bgi\Funktion.txt` and `Uppgift.txt`; BGInfo off) | x | x |
-| desktop | desktop icons in rows along the top, launch icons first | x | x |
+| desktop | clean desktop: launch icons and a TOOLS folder, no Recycle Bin, scripts moved to TOOLS, O-Ringen program folders hidden; rows along the top | x | x |
+| taskbar | taskbar holds only the launch programs; no Search, Task view, Widgets, Chat; tray icons untouched (applies at the next sign-in) | x | x |
 
-Run single modules with `-Modules firewall,receipt`. Options: `-Name TA-03`, `-Uppgift "..."`, `-OlaServer 192.168.1.21`, `-OlaEvent "..."`, `-OlaVersion 6.6.2`, `-Reboot`, `-BaseUrl` / `-ReleaseUrl` (test from another host).
+Run single modules with `-Modules firewall,receipt`.
+
+**Freeze windows:** `freeze.csv` lists date-time windows (race weekend, rehearsal) when install and update refuse to run (exit 3, nothing changed). Test with `-SimulateNow "2027-05-01 10:00"`. The event firewall blocks GitHub anyway while it is on. Options: `-Name TA-03`, `-Uppgift "..."`, `-OlaServer 192.168.1.21`, `-OlaEvent "..."`, `-OlaVersion 6.6.2`, `-Reboot`, `-BaseUrl` / `-ReleaseUrl` (test from another host).
 
 ## Files
 

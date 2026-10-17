@@ -60,6 +60,21 @@ foreach ($e in $snap.Registry) {
 $sys = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System'
 if ($snap.PSObject.Properties.Name -notcontains 'IdleLockSecs') { } elseif ($null -eq $snap.IdleLockSecs) { Remove-ItemProperty $sys InactivityTimeoutSecs -ErrorAction SilentlyContinue } else { Set-ItemProperty $sys InactivityTimeoutSecs $snap.IdleLockSecs -Type DWord }
 & cmd.exe /c "reg delete `"HKLM\SYSTEM\CurrentControlSet\Control\Print\Forms`" /v 10mila /f >nul 2>&1"
+# Single values the modules changed (values.json): back to the old value, or removed if there was none.
+if (Test-Path "$R\values.json") {
+  foreach ($v in @(Get-Content -Raw "$R\values.json" | ConvertFrom-Json)) {
+    $put = {
+      param($path)
+      if ($v.Present) { if (-not (Test-Path -LiteralPath $path)) { New-Item -Force -Path $path | Out-Null }; New-ItemProperty -Force -LiteralPath $path -Name $v.Name -Value $v.Value -PropertyType $v.Kind | Out-Null }
+      else { Remove-ItemProperty -LiteralPath $path -Name $v.Name -ErrorAction SilentlyContinue }
+    }
+    if ($v.Path -match '^USER:([^\\]+)\\(.+)$') {
+      $user = $Matches[1]; $sub = $Matches[2]
+      ForEach-UserHive { param($k, $u) if ($u -eq $user) { & $put "Registry::$($k -replace '^HKU\\', 'HKEY_USERS\')\$sub" } }
+    } else { & $put $v.Path }
+    Write-Host "$($v.Path)\$($v.Name) $(if ($v.Present) { 'restored' } else { 'removed' })"
+  }
+}
 
 Step 'Power, network adapters, firewall, hosts'
 foreach ($v in $snap.PowerValues) {
@@ -73,6 +88,16 @@ foreach ($n in $snap.NicPowerSave) { Enable-NetAdapterPowerManagement -Name $n -
 Copy-Item -Force "$R\hosts" "$env:windir\System32\drivers\etc\hosts"
 
 Step 'OLA settings, startup programs (BGInfo), desktops, name'
+if (Test-Path "$R\moves.json") {   # scripts moved into TOOLS go back, hidden program folders are shown again
+  foreach ($m in @(Get-Content -Raw "$R\moves.json" | ConvertFrom-Json)) {
+    if ($m.Hidden) { $d = Get-Item -Force $m.From -ErrorAction SilentlyContinue; if ($d) { $d.Attributes = $d.Attributes -band -bnot [IO.FileAttributes]::Hidden; Write-Host "shown $($m.From)" } }
+    elseif (Test-Path $m.To) { Move-Item -Force $m.To $m.From; Write-Host "moved back $($m.From)" }
+  }
+}
+Remove-Item -Recurse -Force 'C:\ProgramData\Microsoft\Windows\Start Menu\Programs\10MILA', "$Data\taskbar-layout.xml" -ErrorAction SilentlyContinue
+$tools = "$env:PUBLIC\Desktop\TOOLS"
+Get-ChildItem $tools -Filter *.lnk -ErrorAction SilentlyContinue | Where-Object Name -match '^(10MILA UPDATE|Brandv.gg event)\.lnk$' | Remove-Item -Force
+if ((Test-Path $tools) -and -not (Get-ChildItem $tools -Force)) { Remove-Item $tools }
 if (Test-Path "$R\OLA6") { Copy-Item -Recurse -Force "$R\OLA6\*" 'C:\ProgramData\OLA6' }
 foreach ($d in Get-ChildItem "$R\startup" -Directory -ErrorAction SilentlyContinue) {
   $to = if ($d.Name -eq 'AllUsers') { 'C:\ProgramData\Microsoft\Windows\Start Menu\Programs\StartUp' } else { "C:\Users\$($d.Name)\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup" }
@@ -97,6 +122,6 @@ $kept = @(Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Unin
 if ($kept) { Write-Host "still installed (remove by hand if not wanted): $($kept -join '; ')" }
 Write-Host $(if (-not $left) { "`nPASS restored $($snap.ComputerName)" } else { "`nFAILED restore" }) -ForegroundColor $(if (-not $left) { 'Green' } else { 'Red' })
 Stop-Transcript | Out-Null
-Write-Host 'Log off or restart to see the old wallpaper and desktop.'
+Write-Host 'Log off or restart to see the old wallpaper, desktop and taskbar.'
 if ($Reboot) { Restart-Computer -Force }
 if ($left) { exit 1 }

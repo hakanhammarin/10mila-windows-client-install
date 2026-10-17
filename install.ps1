@@ -17,6 +17,7 @@ param(
   [string]$OkiDriverUrl = 'https://github.com/hakanhammarin/10mila-windows-client-install/releases/latest/download/oki-c542-ps.zip',
   [string]$PythonUrl    = 'https://www.python.org/ftp/python/3.12.10/python-3.12.10-amd64.exe',
   [string]$ReaderUrl    = 'https://ardownload2.adobe.com/pub/adobe/acrobat/win/AcrobatDC/2600222031/AcroRdrDCx642600222031_sv_SE.exe',
+  [string]$SimulateNow,                           # test the freeze windows: e.g. '2027-05-01 10:00'
   [switch]$Reboot
 )
 $ErrorActionPreference = 'Stop'
@@ -24,8 +25,8 @@ $ProgressPreference = 'SilentlyContinue'
 
 # Profiles: which modules, in order. backup always runs first so restore.ps1 can undo the rest.
 $profiles = @{
-  '10mila'  = 'name', 'sportident', 'power', 'powerloss', 'ola', 'nummerlappar', 'receipt', 'firewall', 'wallpaper', 'desktop'
-  'oringen' = 'power', 'receipt', 'firewall', 'wallpaper', 'desktop'
+  '10mila'  = 'name', 'sportident', 'power', 'powerloss', 'ola', 'nummerlappar', 'receipt', 'firewall', 'update', 'wallpaper', 'desktop', 'taskbar'
+  'oringen' = 'power', 'receipt', 'firewall', 'update', 'wallpaper', 'desktop', 'taskbar'
 }
 if (-not $Modules) { $Modules = $profiles[$Setup] }
 if (-not $Modules) { throw "unknown profile $Setup (known: $($profiles.Keys -join ', '))" }
@@ -59,11 +60,44 @@ function ForEach-UserHive([scriptblock]$do) {
     try { & $do $key $u.Name } finally { if ($loaded) { [gc]::Collect(); & cmd.exe /c "reg unload $key >nul 2>&1" } }
   }
 }
-[pscustomobject]@{ Profile = $Setup; Modules = $Modules } | ConvertTo-Json | Set-Content "$Data\profile.json"
+# Freeze windows (freeze.csv in git): no install or update runs inside one, e.g. the race weekend.
+$now = if ($SimulateNow) { [datetime]$SimulateNow } else { Get-Date }
+$frozen = Import-Csv (Get-File "$BaseUrl/freeze.csv" "$Tmp\freeze.csv") | Where-Object { $now -ge [datetime]$_.Start -and $now -le [datetime]$_.End } | Select-Object -First 1
+if ($frozen) {
+  Write-Host "FROZEN until $($frozen.End): $($frozen.Label). Nothing was changed." -ForegroundColor Yellow
+  Stop-Transcript | Out-Null; exit 3
+}
+if ($SimulateNow) { Write-Host "not frozen at $SimulateNow" }
+# Remember a registry value before a module changes it, for restore.ps1 (values.json; the first value seen wins).
+$valuesFile = "$Data\restore\values.json"
+# $id names the place for restore.ps1: the path itself, or USER:<user>\<subkey> for a user's hive (loaded under another name later).
+function Save-Value($path, $name, $id = $path) {
+  $list = @(if (Test-Path $valuesFile) { Get-Content -Raw $valuesFile | ConvertFrom-Json })
+  if ($list | Where-Object { $_.Path -eq $id -and $_.Name -eq $name }) { return }
+  $item = Get-ItemProperty -LiteralPath $path -Name $name -ErrorAction SilentlyContinue
+  $kind = if ($item) { (Get-Item -LiteralPath $path).GetValueKind($name).ToString() } else { $null }
+  $list += [pscustomobject]@{ Path = $id; Name = $name; Present = [bool]$item; Value = $(if ($item) { $item.$name }); Kind = $kind }
+  New-Item -ItemType Directory -Force (Split-Path $valuesFile) | Out-Null
+  ConvertTo-Json -InputObject $list -Depth 3 | Set-Content -Encoding UTF8 $valuesFile
+}
+function Set-Value($path, $name, $value, $kind = 'DWord', $id = $path) {
+  Save-Value $path $name $id
+  if (-not (Test-Path -LiteralPath $path)) { New-Item -Force -Path $path | Out-Null }
+  New-ItemProperty -Force -LiteralPath $path -Name $name -Value $value -PropertyType $kind | Out-Null
+}
+# Set-Value in every user's hive (Default included, so new users get it too).
+function Set-UserValue($sub, $name, $value, $kind = 'DWord') {
+  ForEach-UserHive { param($key, $user) Set-Value "Registry::$($key -replace '^HKU\\', 'HKEY_USERS\')\$sub" $name $value $kind "USER:$user\$sub" }
+}
+
 
 foreach ($m in @('backup') + $Modules) {
   . (Get-File "$BaseUrl/modules/$m.ps1" "$Tmp\$m.ps1")
 }
+
+# Saved for the update: the same choices next time, the versions from git.
+[pscustomobject]@{ Profile = $Setup; Name = $Name; Uppgift = $Uppgift; OlaServer = $OlaServer; OlaEvent = $OlaEvent; BaseUrl = $BaseUrl; ReleaseUrl = $ReleaseUrl } |
+  ConvertTo-Json | Set-Content -Encoding UTF8 "$Data\profile.json"
 
 Step 'Check'
 $ok = $true

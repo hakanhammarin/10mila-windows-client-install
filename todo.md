@@ -43,3 +43,13 @@ O-Ringen readout laptop TA31 (10.0.0.40, Windows 10 Enterprise, user funktionar)
 - [x] Restore tested on TA31: tasks, rules, policies, wallpaper, icon layout and BGInfo back. Lesson: never delete-and-reimport a shared key (Policies\System holds UAC); only keys we own.
 - [ ] O-Ringen bib printing with the OLA MSI: bib PDFs are relative to the start folder (Desktop\OLA-klient via OLA.bat). Validate on a print laptop before O-Ringen uses the MSI.
 - [ ] Check the desktop icon "Brandvägg event" with a person at the screen (UAC prompt, message box).
+
+## Update, freeze windows, clean desktop and taskbar (2026-10-17)
+
+- [x] freeze.csv: 2027-04-30 14:00 to 2027-05-02 23:59. Simulated: 2027-05-01 10:00 = FROZEN exit 3, 2027-05-03 08:00 runs.
+- [x] "10MILA UPDATE" in TOOLS (asks for UAC) and the boot task "10mila update" (SYSTEM, 2 min after start): rerun with profile.json; no internet = nothing changed (update.log).
+- [x] Firewall on: all Windows allow rules off (out: every one; in: all but core networking), one allow-out rule for private ranges. Tested on TA31: DHCP renew ok (lease renewed, same address), mDNS name answered to the Mac, LAN ok, internet and DNS to 8.8.8.8 blocked; off brought back 102 outbound rules.
+- [x] Clean desktop and TOOLS; Recycle Bin hidden; taskbar pins through a layout policy (seen after the next sign-in); extra buttons off by policy where Windows allows it.
+- [x] Hello world: 20 mm feed before the cut.
+- [ ] Rehearsal on the arena: the freeze from 1 h before it needs its date and time in freeze.csv.
+- [ ] Check the taskbar pins after a sign-in on .37 (Windows 11) and TA31 (Windows 10).
