@@ -131,6 +131,9 @@ if (Test-Path "$R\moves.json") {   # scripts moved into TOOLS go back, hidden pr
     elseif (Test-Path $m.To) { Move-Item -Force $m.To $m.From; Write-Host "moved back $($m.From)" }
   }
 }
+foreach ($d in Get-ChildItem "$R\edge-favorites" -Directory -ErrorAction SilentlyContinue) {   # Edge favorites back
+  foreach ($p in Get-ChildItem $d.FullName -Directory) { $to = "C:\Users\$($d.Name)\AppData\Local\Microsoft\Edge\User Data\$($p.Name)"; if (Test-Path $to) { Copy-Item -Force "$($p.FullName)\*" $to; Write-Host "Edge favorites back for $($d.Name)" } }
+}
 Remove-Item -Recurse -Force 'C:\ProgramData\Microsoft\Windows\Start Menu\Programs\10MILA', "$Data\taskbar-layout.xml" -ErrorAction SilentlyContinue
 $tools = "$env:PUBLIC\Desktop\TOOLS"
 Get-ChildItem $tools -Filter *.lnk -ErrorAction SilentlyContinue | Where-Object Name -match '^(10MILA UPDATE|Brandv.gg event)\.lnk$' | Remove-Item -Force

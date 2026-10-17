@@ -29,10 +29,21 @@ foreach ($p in @(@('HideFirstRunExperience', 1), @('AutoImportAtFirstRun', 4), @
   Set-Value $e $p[0] $p[1]
 }
 Set-Value $e HomepageLocation $url 'String'
-Set-Value $e NewTabPageLocation $url 'String'
 Set-Value "$e\RestoreOnStartupURLs" '1' $url 'String'
+if ((Get-ItemProperty $e -ErrorAction SilentlyContinue).NewTabPageLocation -like 'file:*') { Remove-ItemProperty $e NewTabPageLocation }   # Edge does not take a file page as new tab
 # Edge updates put "Microsoft Edge" back on the desktop: not on these desktops (Edge is on the start page and the taskbar).
 Set-Value 'HKLM:\SOFTWARE\Policies\Microsoft\EdgeUpdate' 'CreateDesktopShortcutDefault' 0
 Set-Value 'HKLM:\SOFTWARE\Policies\Microsoft\EdgeUpdate' 'CreateDesktopShortcut{56EB18F8-B008-4CBD-B6D2-8C97FE7E9062}' 0
 Remove-Item "$env:PUBLIC\Desktop\Microsoft Edge.lnk" -Force -ErrorAction SilentlyContinue
+# Favorites: the same buttons as a managed folder on the favorites bar; the old personal favorites move to the restore folder.
+$fav = @(@{ toplevel_name = $v.TITLE }) + @($links | ForEach-Object { @{ name = $_[0]; url = $_[1] } })
+Set-Value $e ManagedFavorites (ConvertTo-Json -InputObject $fav -Compress) 'String'
+Set-Value $e FavoritesBarEnabled 1
+Get-Process msedge -ErrorAction SilentlyContinue | Stop-Process -Force   # Edge reads the policies at its next start
+foreach ($u in Get-ChildItem C:\Users -Directory | Where-Object Name -ne 'Public') {
+  foreach ($b in Get-ChildItem "$($u.FullName)\AppData\Local\Microsoft\Edge\User Data\*\Bookmarks*" -ErrorAction SilentlyContinue) {
+    $to = "$Data\restore\edge-favorites\$($u.Name)\$($b.Directory.Name)"; New-Item -ItemType Directory -Force $to | Out-Null
+    Move-Item -Force $b.FullName "$to\$($b.Name)"; Write-Host "favorites of $($u.Name) ($($b.Directory.Name)) moved to $to"
+  }
+}
 Add-Check { @("Edge starts on $url without questions", ((Test-Path "$start\index.html") -and (Get-ItemProperty $e -ErrorAction SilentlyContinue).HideFirstRunExperience -eq 1)) }
