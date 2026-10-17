@@ -1,9 +1,9 @@
 Group,Function,Prefix
 Speaker,Speaker TV,SPEAKER-TV
 Speaker,Speaker Arena,SPEAKER-AR
-IT,IT (Spares),SPARE
-IN-UT,Avläsning UT,READOUT
-IN-UT,Check IN,CHECKIN
-TA,TA (Tävlingsadmin),TA
+IT,IT,SPARE
+IN-UT,UT,READOUT
+IN-UT,IN,CHECKIN
+TA,TA,TA
 Nummerlappar,Nummerlappar,PRINT
 Förvarning,Förvarning,PREWARN
