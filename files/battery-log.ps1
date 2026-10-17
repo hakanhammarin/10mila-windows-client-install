@@ -21,6 +21,13 @@ function Read-Battery {
     FullmWh = $full; DesignmWh = $design; SOH = $(if ($design -gt 0) { [math]::Round(100 * $full / $design) }); Volt = [math]::Round($st.Voltage / 1000, 2); DrainmW = $st.DischargeRate
   }
 }
+# Runtime from full: drop in % over the minutes measured, scaled to 100 % (needs 10 min and 3 % drop to mean anything).
+function Get-Estimate($rows) {
+  if ($rows.Count -lt 2) { return $null }
+  $min = ([datetime]$rows[-1].Time - [datetime]$rows[0].Time).TotalMinutes; $drop = [double]$rows[0].Percent - [double]$rows[-1].Percent
+  if ($min -lt 10 -or $drop -lt 3) { return $null }
+  [pscustomobject]@{ Measured = [math]::Round($min); Drop = $drop; FullMinutes = [math]::Round($min * 100 / $drop); LeftMinutes = [math]::Round($min * [double]$rows[-1].Percent / $drop) }
+}
 function Close-Run($how) {
   $run = try { Get-Content -Raw $runFile | ConvertFrom-Json } catch { $null }
   if (-not $run) { Remove-Item $runFile; return }   # damaged by the power cut that ended the run
@@ -30,9 +37,10 @@ function Close-Run($how) {
     [pscustomobject]@{
       Start = $first.Time; End = $last.Time; Minutes = [math]::Round(([datetime]$last.Time - [datetime]$first.Time).TotalMinutes)
       FromPercent = $first.Percent; ToPercent = $last.Percent; SOH = $last.SOH; Volt = $last.Volt; Ended = $how; File = $run.File
+      FullMinutes = (Get-Estimate $rows).FullMinutes
     } | ForEach-Object { Save-Json $_ "$dir\last.json" }
   }
-  Remove-Item $runFile
+  Remove-Item $runFile, "$dir\estimate.json" -ErrorAction SilentlyContinue
   if (Get-Command Update-Verdict -ErrorAction SilentlyContinue) { Update-Verdict }
   Start-ScheduledTask -TaskName '10mila wallpaper' -ErrorAction SilentlyContinue
 }
@@ -66,6 +74,9 @@ while ($true) {
     }
     if (((Get-Date) - $lastRow).TotalSeconds -ge 59) {
       $r | Export-Csv -Append -NoTypeInformation -Encoding UTF8 (Get-Content -Raw $runFile | ConvertFrom-Json).File; $lastRow = Get-Date
+      # Every 10 minutes on battery: the estimate so far, on the wallpaper.
+      $rows = @(Import-Csv (Get-Content -Raw $runFile | ConvertFrom-Json).File)
+      if ($rows.Count % 10 -eq 0 -and ($e = Get-Estimate $rows)) { Save-Json $e "$dir\estimate.json"; Start-ScheduledTask -TaskName '10mila wallpaper' -ErrorAction SilentlyContinue }
     }
   } elseif (Test-Path $runFile) {
     $r | Export-Csv -Append -NoTypeInformation -Encoding UTF8 (Get-Content -Raw $runFile | ConvertFrom-Json).File

@@ -79,3 +79,4 @@ O-Ringen readout laptop TA31 (10.0.0.40, Windows 10 Enterprise, user funktionar)
 - [x] siconfig (Config+ 2.12.0 MSI, icon in TOOLS), teams (all Teams variants removed), "Rensa profil" in TOOLS: tested on .40.
 - [x] JSON state files are written beside and moved over: .40's values.json was all zero bytes after its sudden power losses, so single registry values changed by the 10mila template on .40 cannot be put back by restore.ps1 there (snapshot, reg exports and moves are intact).
 - [ ] .46 (user funktionär): not reachable yet (no ping, no ssh). Then: O-Ringen profile with -KeepOnDesktop deltagarservice.
+- [x] Battery estimate: every 10 min on battery (>= 10 min and 3 % drop) estimate.json with time left and time from full, on the wallpaper; the closed run keeps FullMinutes ("räcker ca 3 h 20 min från full", simulated on .37).

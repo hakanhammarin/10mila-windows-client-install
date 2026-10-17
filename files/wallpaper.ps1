@@ -17,6 +17,7 @@ Add-Type -Namespace W -Name Dpi -MemberDefinition '[DllImport("user32.dll")] pub
 # The bib printer's address as the hosts file has it (Nummerlappar laptops).
 $oki = (Get-Content "$env:windir\System32\drivers\etc\hosts" -ErrorAction SilentlyContinue | Where-Object { $_ -match '^\s*([\d.]+)\s+OKIC542PS\s*$' } | Select-Object -Last 1) -replace '^\s*([\d.]+).*', '$1'
 $fw = if (Test-Path 'C:\ProgramData\10mila\firewall-event.ps1') { "Brandv$([char]0xE4)gg event: " + $(if (Test-Path 'C:\ProgramData\10mila\firewall-event.json') { "P$([char]0xC5) (inget internet)" } else { 'AV' }) }
+function HM($m) { $m = [int]$m; if ($m -ge 60) { '{0} h {1} min' -f [math]::Floor($m / 60), ($m % 60) } else { "$m min" } }
 # Battery: the last test (runtime on battery) and the health now.
 $bat = ''
 $bl = 'C:\ProgramData\10mila\battery\last.json'
@@ -28,8 +29,11 @@ if (Test-Path $bl) {
   $t = Get-Content -Raw $bl | ConvertFrom-Json
   $dur = if ($t.Minutes -ge 60) { '{0} h {1} min' -f [math]::Floor($t.Minutes / 60), ($t.Minutes % 60) } else { "$($t.Minutes) min" }
   $bat = "Batteri: $dur ($($t.FromPercent) -> $($t.ToPercent) %$(if ($t.Ended -eq 'battery ran out') { ', tog slut' }))"
+  if ($t.FullMinutes) { $bat += ", r$([char]0xE4)cker ca $(HM $t.FullMinutes) fr$([char]0xE5)n full" }
 }
 $sohLine = if ($soh) { "Batteri SOH: $soh %" }
+$est = 'C:\ProgramData\10mila\battery\estimate.json'   # on battery now: the estimate so far
+if (Test-Path $est) { $e = Get-Content -Raw $est | ConvertFrom-Json; $bat = "P$([char]0xE5) batteri: ca $(HM $e.LeftMinutes) kvar, $(HM $e.FullMinutes) fr$([char]0xE5)n full (m$([char]0xE4)tt $($e.Measured) min)" }
 $dead = if (Test-Path 'C:\ProgramData\10mila\battery\verdict.json') { Get-Content -Raw 'C:\ProgramData\10mila\battery\verdict.json' | ConvertFrom-Json }
 if ($dead.Dead) { $bat = "Batteri D$([char]0xD6)TT: st$([char]0xE4)ngs av utan laddare ($($dead.PowerLosses) g$([char]0xE5)nger)"; if ($soh) { $sohLine = "(batterim$([char]0xE4)taren visar fel: SOH $soh %)" } }
 $scr = [Windows.Forms.Screen]::PrimaryScreen.Bounds
