@@ -10,6 +10,12 @@ Set-UserValue 'Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIco
 $movesFile = "$Data\restore\moves.json"
 $moves = @(Read-JsonFile $movesFile)
 foreach ($d in Get-ChildItem C:\Users -Directory | Where-Object Name -ne 'Public' | ForEach-Object { "$($_.FullName)\Desktop" } | Where-Object { Test-Path $_ }) {
+  # Web shortcuts (.url, Edge with an address) are on the Edge start page now: they move to Skrivbord-arkiv.
+  foreach ($f in Get-ChildItem $d -File | Where-Object { $_.Extension -eq '.url' -or ($_.Extension -eq '.lnk' -and (New-Object -ComObject WScript.Shell).CreateShortcut($_.FullName).TargetPath -like '*msedge.exe') }) {
+    $arc = "$(Split-Path $d)\Skrivbord-arkiv"; New-Item -ItemType Directory -Force $arc | Out-Null
+    Move-Item -Force $f.FullName "$arc\$($f.Name)"; $moves += [pscustomobject]@{ From = $f.FullName; To = "$arc\$($f.Name)"; Hidden = $false }
+    Write-Host "web shortcut $($f.Name) moved to Skrivbord-arkiv (on the start page)"
+  }
   foreach ($f in Get-ChildItem $d -File -Filter *.ps1) {   # scripts are tools, not event software
     Move-Item -Force $f.FullName "$tools\$($f.Name)"; $moves += [pscustomobject]@{ From = $f.FullName; To = "$tools\$($f.Name)"; Hidden = $false }
     Write-Host "moved $($f.Name) to TOOLS"

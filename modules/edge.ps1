@@ -5,7 +5,9 @@ Step 'Edge: no first-run questions, local start page'
 $start = "$Data\start"; New-Item -ItemType Directory -Force $start | Out-Null
 $links = @(@('Google', 'https://www.google.se', 'general'), @('Eventor', 'https://eventor.orientering.se', 'general'))
 if ($Setup -eq 'oringen') {
-  $links += @(@('Gmail', 'https://mail.google.com'), @('O-Ringen', 'https://www.oringen.se'), @('Resultat', 'https://resultat.oringen.se'))
+  $links += @(@('Gmail', 'https://mail.google.com'), @('O-Ringen', 'https://www.oringen.se'), @('Resultat', 'https://resultat.oringen.se'),
+              @('Integrationsportalen', 'https://integration.oringen.se/Account/Login?ReturnUrl=%2F'), @('Citybreak', 'https://agent.citybreak.com/'),
+              @('ByNordiq', 'https://online3-next.citybreak.com/1298401428/sv/sv-SE/varukorg'))
   if (Test-Path 'C:\bgi\o_ringen_cover.jpg') { Copy-Item -Force 'C:\bgi\o_ringen_cover.jpg' "$start\bg.jpg" }
   $v = @{ TITLE = 'O-Ringen'; BG = '#f5f4f2'; IMAGE = 'bg.jpg'; IMGPOS = '35%'; IMGSIZE = '100% auto'; ACCENT = '#d4145a' }
 } else {
