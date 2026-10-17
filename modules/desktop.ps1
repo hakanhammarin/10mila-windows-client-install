@@ -64,7 +64,8 @@ if ($EmptyDownloadsAndTrash) {
 Write-JsonFile @($moves) $movesFile
 
 Get-File "$BaseUrl/files/desktop-row.ps1" "$Data\desktop-row.ps1" | Out-Null
-$act = New-ScheduledTaskAction -Execute powershell.exe -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$Data\desktop-row.ps1`""
+Get-File "$BaseUrl/files/hidden.vbs" "$Data\hidden.vbs" | Out-Null   # no window, no lost focus
+$act = New-ScheduledTaskAction -Execute wscript.exe -Argument "`"$Data\hidden.vbs`" `"$Data\desktop-row.ps1`""
 Register-ScheduledTask -Force -TaskName '10mila desktop row' -Action $act -Trigger (New-ScheduledTaskTrigger -AtLogOn) `
   -Settings (New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries) `
   -Principal (New-ScheduledTaskPrincipal -GroupId 'S-1-5-32-545') | Out-Null

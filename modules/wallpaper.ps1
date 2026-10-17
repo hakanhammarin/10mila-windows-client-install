@@ -32,7 +32,8 @@ ForEach-UserHive { param($key, $user)
     Save-Value $k $n "USER:$user\Software\Microsoft\Windows\CurrentVersion\Run"; Remove-ItemProperty $k $n; Write-Host "BGInfo removed from $user Run ($n)"
   }
 }
-$act = New-ScheduledTaskAction -Execute powershell.exe -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$Data\wallpaper.ps1`""
+Get-File "$BaseUrl/files/hidden.vbs" "$Data\hidden.vbs" | Out-Null   # no window, no lost focus
+$act = New-ScheduledTaskAction -Execute wscript.exe -Argument "`"$Data\hidden.vbs`" `"$Data\wallpaper.ps1`""
 Register-ScheduledTask -Force -TaskName '10mila wallpaper' -Action $act -Trigger (New-ScheduledTaskTrigger -AtLogOn) `
   -Settings (New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries) `
   -Principal (New-ScheduledTaskPrincipal -GroupId 'S-1-5-32-545') | Out-Null   # Users: runs in each user's own session

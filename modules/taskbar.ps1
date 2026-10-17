@@ -34,6 +34,7 @@ $(($pins | ForEach-Object { "        <taskbar:DesktopApp DesktopApplicationLinkP
   </CustomTaskbarLayoutCollection>
 </LayoutModificationTemplate>
 "@
+$changed = -not (Test-Path "$Data\taskbar-layout.xml") -or (Get-Content -Raw "$Data\taskbar-layout.xml") -ne "$xml`r`n"
 Set-Content -Encoding UTF8 "$Data\taskbar-layout.xml" $xml
 # As machine policy: applied at every sign-in, for every user. The file has no Start section, so Start stays as it is.
 $pol = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer'
@@ -52,11 +53,13 @@ Set-UserValue $adv ShowTaskViewButton 0
 Set-UserValue $adv ShowCortanaButton 0
 Set-UserValue $adv ShowCopilotButton 0
 Set-UserValue 'Software\Microsoft\Windows\CurrentVersion\Search' SearchboxTaskbarMode 0
-# Explorer reads it at start: restart it in each signed-in session, then put the desktop icons back in their row.
-$act = New-ScheduledTaskAction -Execute cmd.exe -Argument '/c taskkill /f /im explorer.exe & start explorer.exe'
-Register-ScheduledTask -Force -TaskName '10mila explorer restart' -Action $act -Principal (New-ScheduledTaskPrincipal -GroupId 'S-1-5-32-545') | Out-Null
-Start-ScheduledTask -TaskName '10mila explorer restart'; Start-Sleep 6
-Unregister-ScheduledTask -TaskName '10mila explorer restart' -Confirm:$false
-if (Get-ScheduledTask -TaskName '10mila desktop row' -ErrorAction SilentlyContinue) { Start-ScheduledTask -TaskName '10mila desktop row' }
+if ($changed) {   # only when the pins changed: a restart takes the desktop and taskbar away for a moment
+  # Explorer reads it at start: restart it in each signed-in session, then put the desktop icons back in their row.
+  $act = New-ScheduledTaskAction -Execute cmd.exe -Argument '/c taskkill /f /im explorer.exe & start explorer.exe'
+  Register-ScheduledTask -Force -TaskName '10mila explorer restart' -Action $act -Principal (New-ScheduledTaskPrincipal -GroupId 'S-1-5-32-545') | Out-Null
+  Start-ScheduledTask -TaskName '10mila explorer restart'; Start-Sleep 6
+  Unregister-ScheduledTask -TaskName '10mila explorer restart' -Confirm:$false
+  if (Get-ScheduledTask -TaskName '10mila desktop row' -ErrorAction SilentlyContinue) { Start-ScheduledTask -TaskName '10mila desktop row' }
+}
 Write-Host "pinned: $((Get-ChildItem $menu).BaseName -join ', ')"
 Add-Check { @("taskbar: $((Get-ChildItem $menu -ErrorAction SilentlyContinue).Count) event programs, no extra buttons", ((Get-ItemProperty $pol -ErrorAction SilentlyContinue).StartLayoutFile -eq "$Data\taskbar-layout.xml")) }
