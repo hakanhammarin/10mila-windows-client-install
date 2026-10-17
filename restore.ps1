@@ -149,7 +149,7 @@ Step 'Check'
 $left = @(Get-ScheduledTask -TaskName '10mila *' -ErrorAction SilentlyContinue) + @(Get-NetFirewallRule -Group '10mila', '10mila event' -ErrorAction SilentlyContinue)
 Write-Host $(if (-not $left) { 'ok       no 10mila tasks or firewall rules left' } else { 'FAILED   left: ' + ($left.Name -join ', ') })
 $kept = @(Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*', 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*' -ErrorAction SilentlyContinue |
-  Where-Object DisplayName -match '^(Python 3\.12|Adobe Acrobat)' | ForEach-Object { "$($_.DisplayName) $($_.DisplayVersion)" })
+  Where-Object DisplayName -match '^(Python 3\.12|Adobe Acrobat|LibreOffice)' | ForEach-Object { "$($_.DisplayName) $($_.DisplayVersion)" })
 if ($kept) { Write-Host "still installed (remove by hand if not wanted): $($kept -join '; ')" }
 Write-Host $(if (-not $left) { "`nPASS restored $($snap.ComputerName)" } else { "`nFAILED restore" }) -ForegroundColor $(if (-not $left) { 'Green' } else { 'Red' })
 Stop-Transcript | Out-Null

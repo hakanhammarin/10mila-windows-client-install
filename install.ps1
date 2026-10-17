@@ -19,6 +19,7 @@ param(
   [string]$ReaderUrl    = 'https://ardownload2.adobe.com/pub/adobe/acrobat/win/AcrobatDC/2600222031/AcroRdrDCx642600222031_sv_SE.exe',
   [string]$AutoLogonUser,                         # automatic sign-in: default the user signed in now; password asked for, or
                                                   # from $env:TENMILA_AUTOLOGON_PASSWORD (a parameter would land in install.log)
+  [string]$LibreOfficeVersion = '26.8.1',          # O-Ringen profile; from download.documentfoundation.org
   [string]$SimulateNow,                           # test the freeze windows: e.g. '2027-05-01 10:00'
   [switch]$Reboot
 )
@@ -28,7 +29,7 @@ $ProgressPreference = 'SilentlyContinue'
 # Profiles: which modules, in order. backup always runs first so restore.ps1 can undo the rest.
 $profiles = @{
   '10mila'  = 'name', 'region', 'sportident', 'power', 'autologon', 'powerloss', 'ola', 'nummerlappar', 'receipt', 'battery', 'firewall', 'update', 'wallpaper', 'desktop', 'taskbar'
-  'oringen' = 'region', 'power', 'autologon', 'receipt', 'battery', 'firewall', 'update', 'wallpaper', 'desktop', 'taskbar'
+  'oringen' = 'region', 'power', 'autologon', 'libreoffice', 'receipt', 'battery', 'firewall', 'update', 'wallpaper', 'desktop', 'taskbar'
 }
 $Modules = @($Modules | ForEach-Object { $_ -split ',' } | Where-Object { $_ })   # powershell -File passes a,b as one string
 if (-not $Modules) { $Modules = $profiles[$Setup] }
