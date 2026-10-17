@@ -5,7 +5,13 @@
 param([switch]$KeepOla, [switch]$Reboot)
 $ErrorActionPreference = 'Stop'
 if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-  Write-Host 'Run this from a cmd window opened with "Run as administrator".' -ForegroundColor Red; exit 1
+  # Not elevated: start again as administrator with the same parameters (Windows shows the UAC prompt).
+  $a = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-NoExit', '-File', "`"$PSCommandPath`"")
+  foreach ($k in $PSBoundParameters.Keys) {
+    $v = $PSBoundParameters[$k]
+    if ($v -is [switch]) { if ($v.IsPresent) { $a += "-$k" } } else { $a += "-$k", "`"$(@($v) -join ',')`"" }
+  }
+  Start-Process powershell.exe -Verb RunAs -ArgumentList ($a -join ' '); exit
 }
 $Data = 'C:\ProgramData\10mila'; $R = "$Data\restore"
 if (-not (Test-Path "$R\snapshot.json")) { Write-Host "No snapshot in ${R}: nothing to restore." -ForegroundColor Red; exit 1 }

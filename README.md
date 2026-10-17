@@ -4,11 +4,19 @@ Sets up crew laptops for 10MILA, and parts of it for the O-Ringen laptops, from 
 
 ## Run
 
-Open **cmd as administrator** (not PowerShell: there `curl` and `&&` mean something else) and paste:
+**PowerShell** (Windows 10 and 11, a normal window is enough: it asks for administrator itself):
+
+```
+curl.exe -fsSLo $env:TEMP\10mila.ps1 https://raw.githubusercontent.com/hakanhammarin/10mila-windows-client-install/main/install.ps1; powershell -ExecutionPolicy Bypass -File $env:TEMP\10mila.ps1
+```
+
+**cmd**:
 
 ```
 curl -fsSLo %TEMP%\10mila.ps1 https://raw.githubusercontent.com/hakanhammarin/10mila-windows-client-install/main/install.ps1 && powershell -ExecutionPolicy Bypass -File %TEMP%\10mila.ps1
 ```
+
+In PowerShell `curl` is Invoke-WebRequest and `&&` does not exist in Windows PowerShell 5.1: use `curl.exe` and `;` as above.
 
 10MILA laptop: pick the function and the number on the laptop's label. O-Ringen laptop: add `-Profile oringen`. The script ends in PASS or FAILED (log: `C:\ProgramData\10mila\install.log`). Running it again is safe.
 
