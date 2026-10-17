@@ -31,10 +31,29 @@ function Close-Run($how) {
     } | ConvertTo-Json | Set-Content -Encoding UTF8 "$dir\last.json"
   }
   Remove-Item $runFile
+  if (Get-Command Update-Verdict -ErrorAction SilentlyContinue) { Update-Verdict }
   Start-ScheduledTask -TaskName '10mila wallpaper' -ErrorAction SilentlyContinue
 }
 # Back after the battery ran out (or a shutdown on battery): the open run ends at its last row.
 if (Test-Path $runFile) { Close-Run 'battery ran out' }
+# Verdict: DEAD when the evidence says the battery cannot carry the laptop, whatever its gauge claims.
+#  - a battery test that ran out within 5 minutes, or
+#  - 2 or more sudden power losses (Kernel-Power 41 with no crash code and no power button) since the last good test:
+#    a laptop with a working battery does not lose power when the charger is pulled.
+function Update-Verdict {
+  $last = if (Test-Path "$dir\last.json") { Get-Content -Raw "$dir\last.json" | ConvertFrom-Json }
+  $good = if ($last -and [int]$last.Minutes -ge 5) { [datetime]$last.End } else { (Get-Date).AddDays(-30) }
+  $cuts = @(Get-WinEvent -FilterHashtable @{ LogName = 'System'; ProviderName = 'Microsoft-Windows-Kernel-Power'; Id = 41; StartTime = $good } -ErrorAction SilentlyContinue |
+    Where-Object { $_.Properties[0].Value -eq 0 -and $_.Properties[3].Value -eq 0 })   # BugcheckCode 0, PowerButtonTimestamp 0
+  $short = $last -and $last.Ended -eq 'battery ran out' -and [int]$last.Minutes -lt 5
+  $why = @()
+  if ($short) { $why += "ran out after $($last.Minutes) min ($($last.FromPercent) %)" }
+  if ($cuts.Count -ge 2) { $why += "$($cuts.Count) sudden power losses ($(($cuts | ForEach-Object { $_.TimeCreated.ToString('MM-dd HH:mm') }) -join ', '))" }
+  [pscustomobject]@{ Dead = [bool]$why; Evidence = ($why -join '; '); PowerLosses = $cuts.Count; Checked = (Get-Date -Format s) } |
+    ConvertTo-Json | Set-Content -Encoding UTF8 "$dir\verdict.json"
+}
+Update-Verdict
+Start-ScheduledTask -TaskName '10mila wallpaper' -ErrorAction SilentlyContinue
 $lastRow = [datetime]::MinValue
 while ($true) {
   $r = Read-Battery

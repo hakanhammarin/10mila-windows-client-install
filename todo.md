@@ -70,3 +70,6 @@ O-Ringen readout laptop TA31 (10.0.0.40, Windows 10 Enterprise, user funktionar)
 - .37: design 50 012 mWh, full 35 020 mWh = SOH 70 %, 116 cycles.
 - .40 (Revolve 810 G1): the gauge says 100 % and full = design 37 740 mWh (SOH 100 %), cycle count 0, never a minute on battery in its history since 2022, and 8.1 V on AC where a 3-cell pack reads about 12 V. Two unexpected power losses (Kernel-Power 41) at 16:24 and 16:28 when unplugged. The gauge is not to be trusted: only a real run shows it.
 - [x] LibreOffice 26.8.1 for O-Ringen deltagarservice (module libreoffice in the oringen profile, silent MSI, Swedish UI, no update checks). Installed on .40.
+- [x] Battery verdict (verdict.json): DEAD after a test that ran out within 5 min, or 2+ sudden power losses (Kernel-Power 41, no bugcheck, no power button) since the last good test. .40 = DEAD (16:24, 16:28), red line on the wallpaper; .37 = OK.
+- [x] Reader module on every laptop: Acrobat Reader, default for .pdf through the DefaultAssociationsConfiguration policy (applies at sign-in), FeatureLockDown policies for upsell, AI assistant, cloud, welcome screen, messages, updater; AdobeARMservice disabled. Installed on .37 and .40.
+- [ ] Reader EULA still shows at the first start on each laptop (not accepted on anyone's behalf).

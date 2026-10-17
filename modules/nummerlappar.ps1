@@ -50,10 +50,7 @@ if ($me.Group -eq 'Nummerlappar') {
     Start-Process -Wait (Get-File $PythonUrl "$Tmp\python.exe") '/quiet InstallAllUsers=1 PrependPath=1 Include_test=0 Include_launcher=1 AssociateFiles=1'
   }
   & $py -m pip install --quiet --disable-pip-version-check --no-warn-script-location reportlab pypdf
-  $acro = 'C:\Program Files\Adobe\Acrobat DC\Acrobat\Acrobat.exe'   # the path acrobat_print_2.py uses
-  if (-not (Test-Path $acro)) {   # ~790 MB; no EULA flag: the operator accepts it at the first test print
-    Start-Process -Wait (Get-File $ReaderUrl "$Tmp\reader.exe") '/sAll /rs /msi /norestart ALLUSERS=1 DISABLEDESKTOPSHORTCUT=1'
-  }
+  $acro = 'C:\Program Files\Adobe\Acrobat DC\Acrobat\Acrobat.exe'   # installed by the reader module
   # Print station (C:\bibs, PDFs in C:\bibs\out_bibs are kept) and the generator (C:\bibs-prod).
   foreach ($r in @(@{ Repo = '10mila_bib_print_via_acrobat_reader_on_windows'; Dir = 'C:\bibs' }, @{ Repo = '10mila_bibs_prod'; Dir = 'C:\bibs-prod' })) {
     Get-File "https://codeload.github.com/hakanhammarin/$($r.Repo)/zip/HEAD" "$Tmp\$($r.Repo).zip" | Out-Null

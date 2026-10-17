@@ -30,6 +30,8 @@ if (Test-Path $bl) {
   $bat = "Batteri: $dur ($($t.FromPercent) -> $($t.ToPercent) %$(if ($t.Ended -eq 'battery ran out') { ', tog slut' }))"
 }
 $sohLine = if ($soh) { "Batteri SOH: $soh %" }
+$dead = if (Test-Path 'C:\ProgramData\10mila\battery\verdict.json') { Get-Content -Raw 'C:\ProgramData\10mila\battery\verdict.json' | ConvertFrom-Json }
+if ($dead.Dead) { $bat = "Batteri D$([char]0xD6)TT: st$([char]0xE4)ngs av utan laddare ($($dead.PowerLosses) g$([char]0xE5)nger)"; if ($soh) { $sohLine = "(batterim$([char]0xE4)taren visar fel: SOH $soh %)" } }
 $scr = [Windows.Forms.Screen]::PrimaryScreen.Bounds
 $w = [Math]::Max($scr.Width, 800); $h = [Math]::Max($scr.Height, 600)
 $bmp = New-Object Drawing.Bitmap $w, $h
@@ -51,7 +53,8 @@ $small = New-Object Drawing.Font 'Arial', ([int]($h / 34)), ([Drawing.FontStyle]
 $m = [int]($h / 40); $y = $m
 foreach ($line in @(@("Dator: $dator", $big), @("Funktion: $funktion", $small), @("Uppgift: $uppgift", $small), @("Skrivare OKI: $oki", $small), @($fw, $small), @($bat, $small), @($sohLine, $small))) {
   if (-not "$($line[0])".Trim() -or $line[0] -match ':\s*$') { continue }   # empty value: leave the line out
-  $g.DrawString($line[0], $line[1], $ink, [single]($w - $m), [single]$y, $fmt); $y += $line[1].Height * 1.15
+  $brush = $ink; if ($line[0] -like 'Batteri D*TT*') { $brush = [Drawing.Brushes]::DarkRed; $line[1] = New-Object Drawing.Font 'Arial', ([int]($h / 28)), ([Drawing.FontStyle]::Bold), ([Drawing.GraphicsUnit]::Pixel) }
+  $g.DrawString($line[0], $line[1], $brush, [single]($w - $m), [single]$y, $fmt); $y += $line[1].Height * 1.15
 }
 if ($cfg.Style -ne 'oringen' -and (Test-Path 'C:\ProgramData\10mila\10mila-logo.png')) {   # 10MILA logo, lower right, above the taskbar
   $logo = [Drawing.Image]::FromFile('C:\ProgramData\10mila\10mila-logo.png')
