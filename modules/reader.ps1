@@ -26,6 +26,9 @@ Set-Content -Encoding UTF8 $xml @'
 </DefaultAssociations>
 '@
 Set-Value 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\System' DefaultAssociationsConfiguration $xml 'String'
-Add-Check { @('Acrobat Reader, default for .pdf at sign-in, extras off', ((Test-Path $acro) -and
-  (Get-ItemProperty 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\System' -ErrorAction SilentlyContinue).DefaultAssociationsConfiguration -eq $xml -and
-  (Get-ItemProperty $fl -ErrorAction SilentlyContinue).bEnableGentech -eq 0)) }
+Add-Check {
+  $miss = @()
+  if (-not (Test-Path $acro)) { $miss += 'Reader' }
+  if ((Get-ItemProperty 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\System' -ErrorAction SilentlyContinue).DefaultAssociationsConfiguration -ne $xml) { $miss += 'PDF default' }
+  if ((Get-ItemProperty $fl -ErrorAction SilentlyContinue).bEnableGentech -ne 0) { $miss += 'policies' }
+  @("Acrobat Reader, default for .pdf at sign-in, extras off$(if ($miss) { ' - missing: ' + ($miss -join ', ') })", ($miss.Count -eq 0)) }
