@@ -44,6 +44,7 @@ curl -fsSLo %TEMP%\restore.ps1 https://raw.githubusercontent.com/hakanhammarin/1
 | sportident | SPORTident signed USB driver (2026-06-09), old 2014 driver removed | x | x |
 | siconfig | SPORTident Config+ with its icon in TOOLS | x | x |
 | autoplay | AutoPlay and AutoRun off: nothing starts when a USB stick, card or phone is plugged in | x | x |
+| notifications | no Windows notifications: app toasts, notification center, tips and suggestions, Windows Security and Update pop-ups | x | x |
 | power | never sleep, dim or lock; lid and buttons do nothing; no screen saver | x | x |
 | autologon | automatic sign-in with the account signed in now; password asked for (or `TENMILA_AUTOLOGON_PASSWORD`), kept as an LSA secret | x | x |
 | powerloss | PowerLoss agent at boot | x | |
