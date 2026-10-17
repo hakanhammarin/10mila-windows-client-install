@@ -9,13 +9,13 @@ if ($others -or -not $have) {   # same version alone: keep it (it may be open)
   Get-CimInstance Win32_Process | Where-Object ExecutablePath -like "$ola\*" | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
   # SOFT changes the UpgradeCode between versions (6.5.0 -> 6.6.2), so the MSI does not replace the old one: remove it first.
   foreach ($o in $others) {
-    $p = Start-Process msiexec.exe -Wait -PassThru -ArgumentList "/x $($o.PSChildName) /qn /norestart"
-    if ($p.ExitCode -notin 0, 3010, 1605) { throw "removing OLA $($o.DisplayVersion) failed: exit $($p.ExitCode)" }
+    $code = Invoke-Msi "/x $($o.PSChildName) /qn /norestart"
+    if ($code -notin 0, 3010, 1605) { throw "removing OLA $($o.DisplayVersion) failed: exit $($code)" }
   }
   # Both share C:\Program Files\OLA 6 and the start menu: after removing the other version, reinstall the wanted one in full.
   $msiArgs = "/i `"$msi`"" + $(if ($have) { ' REINSTALL=ALL REINSTALLMODE=amus' } else { '' })
-  $p = Start-Process msiexec.exe -Wait -PassThru -ArgumentList "$msiArgs /qn /norestart /l*v `"$Data\ola-msi.log`""
-  if ($p.ExitCode -notin 0, 3010) { throw "OLA msi failed: exit $($p.ExitCode), see $Data\ola-msi.log" }
+  $code = Invoke-Msi "$msiArgs /qn /norestart /l*v `"$Data\ola-msi.log`""
+  if ($code -notin 0, 3010) { throw "OLA msi failed: exit $($code), see $Data\ola-msi.log" }
 }
 if (Test-Path 'C:\OLA-Klient\.installed') { Remove-Item -Recurse -Force 'C:\OLA-Klient' -ErrorAction SilentlyContinue }   # the 6.4 zip install of the first test runs
 New-Item -ItemType Directory -Force "$olaCfg\db" | Out-Null

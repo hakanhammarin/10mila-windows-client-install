@@ -52,6 +52,15 @@ function Get-File($url, $out) {
   if ($LASTEXITCODE -ne 0) { throw "download failed: $url" }
   $out
 }
+# msiexec, waiting while another installation runs (exit 1618, e.g. Windows Update or a removal just before).
+function Invoke-Msi([string]$arguments) {
+  for ($i = 0; $i -lt 20; $i++) {
+    $p = Start-Process msiexec.exe -Wait -PassThru -ArgumentList $arguments
+    if ($p.ExitCode -ne 1618) { return $p.ExitCode }
+    Write-Host 'another installation is running, waiting 30 s'; Start-Sleep 30
+  }
+  return 1618
+}
 function Step($text) { Write-Host "`n== $text" -ForegroundColor Cyan }
 $Checks = New-Object Collections.Generic.List[scriptblock]
 function Add-Check([scriptblock]$test) { $Checks.Add($test) }   # the block returns @(text, passed)
