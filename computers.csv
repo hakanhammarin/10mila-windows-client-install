@@ -6,3 +6,4 @@ IN-UT,Avläsning UT,READOUT
 IN-UT,Check IN,CHECKIN
 TA,TA (Tävlingsadmin),TA
 Nummerlappar,Nummerlappar,PRINT
+Förvarning,Förvarning,PREWARN
