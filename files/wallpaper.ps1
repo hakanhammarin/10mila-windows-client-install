@@ -17,6 +17,19 @@ Add-Type -Namespace W -Name Dpi -MemberDefinition '[DllImport("user32.dll")] pub
 # The bib printer's address as the hosts file has it (Nummerlappar laptops).
 $oki = (Get-Content "$env:windir\System32\drivers\etc\hosts" -ErrorAction SilentlyContinue | Where-Object { $_ -match '^\s*([\d.]+)\s+OKIC542PS\s*$' } | Select-Object -Last 1) -replace '^\s*([\d.]+).*', '$1'
 $fw = if (Test-Path 'C:\ProgramData\10mila\firewall-event.ps1') { "Brandv$([char]0xE4)gg event: " + $(if (Test-Path 'C:\ProgramData\10mila\firewall-event.json') { "P$([char]0xC5) (inget internet)" } else { 'AV' }) }
+# Battery: the last test (runtime on battery) and the health now.
+$bat = ''
+$bl = 'C:\ProgramData\10mila\battery\last.json'
+$soh = try { $f = (Get-CimInstance -Namespace root\wmi BatteryFullChargedCapacity -ErrorAction Stop | Select-Object -First 1).FullChargedCapacity
+  $d = (Get-CimInstance -Namespace root\wmi BatteryStaticData -ErrorAction SilentlyContinue | Select-Object -First 1).DesignedCapacity
+  if (-not $d) { $d = [int]([regex]::Match((Get-Content 'C:\ProgramData\10mila\battery\report.xml' -Raw -ErrorAction SilentlyContinue), '<DesignCapacity>(\d+)').Groups[1].Value) }
+  if ($d -gt 0) { [math]::Round(100 * $f / $d) } } catch { $null }
+if (Test-Path $bl) {
+  $t = Get-Content -Raw $bl | ConvertFrom-Json
+  $dur = if ($t.Minutes -ge 60) { '{0} h {1} min' -f [math]::Floor($t.Minutes / 60), ($t.Minutes % 60) } else { "$($t.Minutes) min" }
+  $bat = "Batteri: $dur ($($t.FromPercent) -> $($t.ToPercent) %$(if ($t.Ended -eq 'battery ran out') { ', tog slut' }))"
+}
+$sohLine = if ($soh) { "Batteri SOH: $soh %" }
 $scr = [Windows.Forms.Screen]::PrimaryScreen.Bounds
 $w = [Math]::Max($scr.Width, 800); $h = [Math]::Max($scr.Height, 600)
 $bmp = New-Object Drawing.Bitmap $w, $h
@@ -36,8 +49,8 @@ $fmt = New-Object Drawing.StringFormat; $fmt.Alignment = 'Far'
 $big = New-Object Drawing.Font 'Arial', ([int]($h / 20)), ([Drawing.FontStyle]::Bold), ([Drawing.GraphicsUnit]::Pixel)
 $small = New-Object Drawing.Font 'Arial', ([int]($h / 34)), ([Drawing.FontStyle]::Regular), ([Drawing.GraphicsUnit]::Pixel)
 $m = [int]($h / 40); $y = $m
-foreach ($line in @(@("Dator: $dator", $big), @("Funktion: $funktion", $small), @("Uppgift: $uppgift", $small), @("Skrivare OKI: $oki", $small), @($fw, $small))) {
-  if ($line[0] -match ':\s*$') { continue }   # empty value: leave the line out
+foreach ($line in @(@("Dator: $dator", $big), @("Funktion: $funktion", $small), @("Uppgift: $uppgift", $small), @("Skrivare OKI: $oki", $small), @($fw, $small), @($bat, $small), @($sohLine, $small))) {
+  if (-not "$($line[0])".Trim() -or $line[0] -match ':\s*$') { continue }   # empty value: leave the line out
   $g.DrawString($line[0], $line[1], $ink, [single]($w - $m), [single]$y, $fmt); $y += $line[1].Height * 1.15
 }
 if ($cfg.Style -ne 'oringen' -and (Test-Path 'C:\ProgramData\10mila\10mila-logo.png')) {   # 10MILA logo, lower right, above the taskbar

@@ -63,3 +63,9 @@ O-Ringen readout laptop TA31 (10.0.0.40, Windows 10 Enterprise, user funktionar)
 - [ ] Give the token write access to 10mila_bib_print_via_acrobat_reader_on_windows, or merge the descending loop there.
 - [x] Wallpaper shows "Brandvägg event: PÅ/AV"; the switch redraws it. SIRAP TCP 10001 inbound rule in group 10mila (kept when the event firewall is on). Region module: W. Europe Standard Time, sv-SE, GeoId 221 (system locale after restart).
 - [x] Taskbar pins: .bat programs are pinned through cmd.exe (the taskbar refuses .bat targets, so the first layout showed no pins).
+
+## Battery test (2026-10-17)
+
+- [x] battery-log.ps1 (task "10mila battery", SYSTEM): polls every 10 s, a CSV row a minute on battery; run closed when AC is back or at the next start after the battery ran out; last.json shown on the wallpaper with SOH (design capacity from the battery report when WMI has none). Close after "ran out" tested with a simulated run on .37.
+- .37: design 50 012 mWh, full 35 020 mWh = SOH 70 %, 116 cycles.
+- .40 (Revolve 810 G1): the gauge says 100 % and full = design 37 740 mWh (SOH 100 %), cycle count 0, never a minute on battery in its history since 2022, and 8.1 V on AC where a 3-cell pack reads about 12 V. Two unexpected power losses (Kernel-Power 41) at 16:24 and 16:28 when unplugged. The gauge is not to be trusted: only a real run shows it.
