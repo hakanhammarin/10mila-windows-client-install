@@ -38,6 +38,14 @@ if ($KeepOnDesktop) {
     }
   }
 }
+# -EmptyDownloadsAndTrash: an old laptop's Downloads and Recycle Bins are emptied for every user (cannot be undone).
+if ($EmptyDownloadsAndTrash) {
+  foreach ($u in Get-ChildItem C:\Users -Directory | Where-Object Name -ne 'Public') {
+    Get-ChildItem "$($u.FullName)\Downloads" -Force -ErrorAction SilentlyContinue | Where-Object Name -ne 'desktop.ini' | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+  }
+  Get-ChildItem 'C:\$Recycle.Bin' -Force -Directory -ErrorAction SilentlyContinue | ForEach-Object { Get-ChildItem $_.FullName -Force | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue }
+  Write-Host 'Downloads and Recycle Bins emptied'
+}
 Write-JsonFile @($moves) $movesFile
 
 Get-File "$BaseUrl/files/desktop-row.ps1" "$Data\desktop-row.ps1" | Out-Null

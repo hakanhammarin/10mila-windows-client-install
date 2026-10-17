@@ -22,6 +22,7 @@ param(
   [string]$SiConfigVersion = '2.12.0',            # SPORTident Config+ from sportident.com
   [string]$LibreOfficeVersion = '26.8.1',          # O-Ringen profile; from download.documentfoundation.org
   [string[]]$KeepOnDesktop,                       # e.g. deltagarservice: the rest of the desktop moves to Skrivbord-arkiv
+  [switch]$EmptyDownloadsAndTrash,                # an old laptop: empty every user's Downloads and the Recycle Bins
   [string]$SimulateNow,                           # test the freeze windows: e.g. '2027-05-01 10:00'
   [switch]$Reboot
 )
