@@ -44,8 +44,18 @@ function Close-Run($how) {
   if (Get-Command Update-Verdict -ErrorAction SilentlyContinue) { Update-Verdict }
   Start-ScheduledTask -TaskName '10mila wallpaper' -ErrorAction SilentlyContinue
 }
-# Back after the battery ran out (or a shutdown on battery): the open run ends at its last row.
-if (Test-Path $runFile) { Close-Run 'battery ran out' }
+# An open run at start: after a reboot it ends at its last row - "battery ran out" when Windows lost power (Kernel-Power 41),
+# "shut down" after a clean shutdown. Without a reboot (the logger was restarted, e.g. by the update) the run goes on.
+if (Test-Path $runFile) {
+  $open = try { Get-Content -Raw $runFile | ConvertFrom-Json } catch { $null }
+  $lastTime = try { [datetime](@(Import-Csv $open.File)[-1].Time) } catch { $null }
+  $boot = (Get-CimInstance Win32_OperatingSystem).LastBootUpTime
+  if (-not $lastTime) { Remove-Item $runFile -ErrorAction SilentlyContinue }
+  elseif ($boot -gt $lastTime) {
+    $cut = Get-WinEvent -FilterHashtable @{ LogName = 'System'; ProviderName = 'Microsoft-Windows-Kernel-Power'; Id = 41; StartTime = $lastTime } -ErrorAction SilentlyContinue | Select-Object -First 1
+    Close-Run $(if ($cut) { 'battery ran out' } else { 'shut down' })
+  }
+}
 # Verdict: DEAD when the evidence says the battery cannot carry the laptop, whatever its gauge claims.
 #  - a battery test that ran out within 5 minutes, or
 #  - 2 or more sudden power losses (Kernel-Power 41 with no crash code and no power button) since the last good test:
@@ -70,10 +80,11 @@ while ($true) {
   if (-not $r.OnAC) {
     if (-not (Test-Path $runFile)) {
       $f = "$dir\run-$(Get-Date -Format yyyyMMdd-HHmmss).csv"
-      Save-Json ([pscustomobject]@{ File = $f }) $runFile; $lastRow = [datetime]::MinValue
+      Save-Json ([pscustomobject]@{ File = $f }) $runFile; $lastRow = [datetime]::MinValue; $newRun = $true
     }
     if (((Get-Date) - $lastRow).TotalSeconds -ge 59) {
       $r | Export-Csv -Append -NoTypeInformation -Encoding UTF8 (Get-Content -Raw $runFile | ConvertFrom-Json).File; $lastRow = Get-Date
+      if ($newRun) { $newRun = $false; Start-ScheduledTask -TaskName '10mila wallpaper' -ErrorAction SilentlyContinue }   # "on battery since" on the desktop
       # Every 10 minutes on battery: the estimate so far, on the wallpaper.
       $rows = @(Import-Csv (Get-Content -Raw $runFile | ConvertFrom-Json).File)
       if ($rows.Count % 10 -eq 0 -and ($e = Get-Estimate $rows)) { Save-Json $e "$dir\estimate.json"; Start-ScheduledTask -TaskName '10mila wallpaper' -ErrorAction SilentlyContinue }

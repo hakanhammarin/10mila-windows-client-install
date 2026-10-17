@@ -28,10 +28,13 @@ $soh = try { $f = (Get-CimInstance -Namespace root\wmi BatteryFullChargedCapacit
 if (Test-Path $bl) {
   $t = Get-Content -Raw $bl | ConvertFrom-Json
   $dur = if ($t.Minutes -ge 60) { '{0} h {1} min' -f [math]::Floor($t.Minutes / 60), ($t.Minutes % 60) } else { "$($t.Minutes) min" }
-  $bat = "Batteri: $dur ($($t.FromPercent) -> $($t.ToPercent) %$(if ($t.Ended -eq 'battery ran out') { ', tog slut' }))"
+  $bat = "Batteri: $dur ($($t.FromPercent) -> $($t.ToPercent) %$(if ($t.Ended -eq 'battery ran out') { ', tog slut' } elseif ($t.Ended -eq 'shut down') { ', avst$([char]0xE4)ngd' }))"
   if ($t.FullMinutes) { $bat += ", r$([char]0xE4)cker ca $(HM $t.FullMinutes) fr$([char]0xE5)n full" }
 }
 $sohLine = if ($soh) { "Batteri SOH: $soh %" }
+$runf = 'C:\ProgramData\10mila\battery\run.json'   # on battery now, before there is an estimate
+if (Test-Path $runf) { $rr = try { @(Import-Csv (Get-Content -Raw $runf | ConvertFrom-Json).File) } catch { @() }
+  if ($rr) { $bat = "P$([char]0xE5) batteri sedan $(([datetime]$rr[0].Time).ToString('HH:mm')) ($($rr[0].Percent) -> $($rr[-1].Percent) %)" } }
 $est = 'C:\ProgramData\10mila\battery\estimate.json'   # on battery now: the estimate so far
 if (Test-Path $est) { $e = Get-Content -Raw $est | ConvertFrom-Json; $bat = "P$([char]0xE5) batteri: ca $(HM $e.LeftMinutes) kvar, $(HM $e.FullMinutes) fr$([char]0xE5)n full (m$([char]0xE4)tt $($e.Measured) min)" }
 $dead = if (Test-Path 'C:\ProgramData\10mila\battery\verdict.json') { Get-Content -Raw 'C:\ProgramData\10mila\battery\verdict.json' | ConvertFrom-Json }
