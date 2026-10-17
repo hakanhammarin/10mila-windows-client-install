@@ -2,9 +2,13 @@
 # software move into TOOLS; the program folders the O-Ringen .bat files start from are hidden), in rows along the top.
 Step 'Clean desktop, icons in a row'
 $tools = "$env:PUBLIC\Desktop\TOOLS"; New-Item -ItemType Directory -Force $tools | Out-Null
+Get-File "$BaseUrl/files/rensa-profil.ps1" "$Data\rensa-profil.ps1" | Out-Null   # "Rensa profil" in TOOLS
+$sc = (New-Object -ComObject WScript.Shell).CreateShortcut("$tools\Rensa profil.lnk")
+$sc.TargetPath = 'powershell.exe'; $sc.Arguments = "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$Data\rensa-profil.ps1`""
+$sc.IconLocation = "$env:windir\System32\shell32.dll,31"; $sc.Description = 'Empty browser data, Downloads, recent files, temp and the Recycle Bin of this user'; $sc.Save()
 Set-UserValue 'Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel' '{645FF040-5081-101B-9F08-00AA002F954E}' 1   # Recycle Bin
 $movesFile = "$Data\restore\moves.json"
-$moves = @(if (Test-Path $movesFile) { Get-Content -Raw $movesFile | ConvertFrom-Json })
+$moves = @(Read-JsonFile $movesFile)
 foreach ($d in Get-ChildItem C:\Users -Directory | Where-Object Name -ne 'Public' | ForEach-Object { "$($_.FullName)\Desktop" } | Where-Object { Test-Path $_ }) {
   foreach ($f in Get-ChildItem $d -File -Filter *.ps1) {   # scripts are tools, not event software
     Move-Item -Force $f.FullName "$tools\$($f.Name)"; $moves += [pscustomobject]@{ From = $f.FullName; To = "$tools\$($f.Name)"; Hidden = $false }
@@ -20,8 +24,21 @@ foreach ($d in Get-ChildItem C:\Users -Directory | Where-Object Name -ne 'Public
     }
   }
 }
-New-Item -ItemType Directory -Force (Split-Path $movesFile) | Out-Null
-ConvertTo-Json -InputObject @($moves) -Depth 3 | Set-Content -Encoding UTF8 $movesFile
+# -KeepOnDesktop deltagarservice: on that laptop everything else on the users' desktops is old history and moves to
+# C:\Users\<user>\Skrivbord-arkiv (not deleted; restore.ps1 puts it back).
+if ($KeepOnDesktop) {
+  $keep = @($KeepOnDesktop | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim() }) + 'TOOLS', 'desktop.ini'
+  foreach ($u in Get-ChildItem C:\Users -Directory | Where-Object Name -ne 'Public') {
+    $d = "$($u.FullName)\Desktop"; if (-not (Test-Path $d)) { continue }
+    $arc = "$($u.FullName)\Skrivbord-arkiv"
+    foreach ($f in Get-ChildItem $d -Force | Where-Object { $_.Name -notin $keep -and -not ($_.Attributes -band [IO.FileAttributes]::Hidden) }) {
+      New-Item -ItemType Directory -Force $arc | Out-Null
+      Move-Item -Force $f.FullName "$arc\$($f.Name)"; $moves += [pscustomobject]@{ From = $f.FullName; To = "$arc\$($f.Name)"; Hidden = $false }
+      Write-Host "archived $($f.Name) ($($u.Name))"
+    }
+  }
+}
+Write-JsonFile @($moves) $movesFile
 
 Get-File "$BaseUrl/files/desktop-row.ps1" "$Data\desktop-row.ps1" | Out-Null
 $act = New-ScheduledTaskAction -Execute powershell.exe -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$Data\desktop-row.ps1`""

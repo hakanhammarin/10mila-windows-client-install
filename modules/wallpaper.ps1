@@ -2,7 +2,7 @@
 # 10mila: light grey, values from client.json. oringen: the O-Ringen banner, values from C:\bgi\Funktion.txt and Uppgift.txt; BGInfo is switched off.
 Step 'Wallpaper'
 $style = if ($Setup -eq 'oringen') { 'oringen' } else { '10mila' }
-[pscustomobject]@{ Style = $style } | ConvertTo-Json | Set-Content "$Data\wallpaper.json"
+Write-JsonFile ([pscustomobject]@{ Style = $style }) "$Data\wallpaper.json"
 Get-File "$BaseUrl/files/wallpaper.ps1" "$Data\wallpaper.ps1" | Out-Null
 Get-File "$BaseUrl/files/10mila-logo.png" "$Data\10mila-logo.png" | Out-Null
 # The first version set a machine wallpaper policy; it would hide the per-user wallpaper.

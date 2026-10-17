@@ -19,7 +19,9 @@ param(
   [string]$ReaderUrl    = 'https://ardownload2.adobe.com/pub/adobe/acrobat/win/AcrobatDC/2600222031/AcroRdrDCx642600222031_sv_SE.exe',
   [string]$AutoLogonUser,                         # automatic sign-in: default the user signed in now; password asked for, or
                                                   # from $env:TENMILA_AUTOLOGON_PASSWORD (a parameter would land in install.log)
+  [string]$SiConfigVersion = '2.12.0',            # SPORTident Config+ from sportident.com
   [string]$LibreOfficeVersion = '26.8.1',          # O-Ringen profile; from download.documentfoundation.org
+  [string[]]$KeepOnDesktop,                       # e.g. deltagarservice: the rest of the desktop moves to Skrivbord-arkiv
   [string]$SimulateNow,                           # test the freeze windows: e.g. '2027-05-01 10:00'
   [switch]$Reboot
 )
@@ -28,8 +30,8 @@ $ProgressPreference = 'SilentlyContinue'
 
 # Profiles: which modules, in order. backup always runs first so restore.ps1 can undo the rest.
 $profiles = @{
-  '10mila'  = 'name', 'region', 'sportident', 'power', 'autologon', 'powerloss', 'ola', 'reader', 'nummerlappar', 'receipt', 'battery', 'firewall', 'update', 'wallpaper', 'desktop', 'taskbar'
-  'oringen' = 'region', 'power', 'autologon', 'libreoffice', 'reader', 'receipt', 'battery', 'firewall', 'update', 'wallpaper', 'desktop', 'taskbar'
+  '10mila'  = 'name', 'region', 'teams', 'sportident', 'siconfig', 'power', 'autologon', 'powerloss', 'ola', 'reader', 'nummerlappar', 'receipt', 'battery', 'firewall', 'update', 'wallpaper', 'desktop', 'taskbar'
+  'oringen' = 'region', 'teams', 'siconfig', 'power', 'autologon', 'libreoffice', 'reader', 'receipt', 'battery', 'firewall', 'update', 'wallpaper', 'desktop', 'taskbar'
 }
 $Modules = @($Modules | ForEach-Object { $_ -split ',' } | Where-Object { $_ })   # powershell -File passes a,b as one string
 if (-not $Modules) { $Modules = $profiles[$Setup] }
@@ -75,14 +77,24 @@ if ($SimulateNow) { Write-Host "not frozen at $SimulateNow" }
 # Remember a registry value before a module changes it, for restore.ps1 (values.json; the first value seen wins).
 $valuesFile = "$Data\restore\values.json"
 # $id names the place for restore.ps1: the path itself, or USER:<user>\<subkey> for a user's hive (loaded under another name later).
+# JSON state files: written beside and then moved over, so a power cut (a dead battery) never leaves a half-written file.
+function Write-JsonFile($object, $path) {
+  New-Item -ItemType Directory -Force (Split-Path $path) | Out-Null
+  ConvertTo-Json -InputObject $object -Depth 4 | Set-Content -Encoding UTF8 "$path.tmp"; Move-Item -Force "$path.tmp" $path
+}
+function Read-JsonFile($path) {
+  if (-not (Test-Path $path)) { return @() }
+  try { @(Get-Content -Raw $path | ConvertFrom-Json) } catch {
+    Move-Item -Force $path "$path.bad-$(Get-Date -Format yyyyMMddHHmmss)"; Write-Host "$path was damaged (power cut?): kept as .bad, starting a new one" -ForegroundColor Yellow; @()
+  }
+}
 function Save-Value($path, $name, $id = $path) {
-  $list = @(if (Test-Path $valuesFile) { Get-Content -Raw $valuesFile | ConvertFrom-Json })
+  $list = @(Read-JsonFile $valuesFile)   # @(): one item comes back unrolled
   if ($list | Where-Object { $_.Path -eq $id -and $_.Name -eq $name }) { return }
   $item = Get-ItemProperty -LiteralPath $path -Name $name -ErrorAction SilentlyContinue
   $kind = if ($item) { (Get-Item -LiteralPath $path).GetValueKind($name).ToString() } else { $null }
   $list += [pscustomobject]@{ Path = $id; Name = $name; Present = [bool]$item; Value = $(if ($item) { $item.$name }); Kind = $kind }
-  New-Item -ItemType Directory -Force (Split-Path $valuesFile) | Out-Null
-  ConvertTo-Json -InputObject $list -Depth 3 | Set-Content -Encoding UTF8 $valuesFile
+  Write-JsonFile $list $valuesFile
 }
 function Set-Value($path, $name, $value, $kind = 'DWord', $id = $path) {
   Save-Value $path $name $id
@@ -100,8 +112,7 @@ foreach ($m in @('backup') + $Modules) {
 }
 
 # Saved for the update: the same choices next time, the versions from git.
-[pscustomobject]@{ Profile = $Setup; Name = $Name; Uppgift = $Uppgift; OlaServer = $OlaServer; OlaEvent = $OlaEvent; BaseUrl = $BaseUrl; ReleaseUrl = $ReleaseUrl } |
-  ConvertTo-Json | Set-Content -Encoding UTF8 "$Data\profile.json"
+Write-JsonFile ([pscustomobject]@{ Profile = $Setup; Name = $Name; Uppgift = $Uppgift; OlaServer = $OlaServer; OlaEvent = $OlaEvent; BaseUrl = $BaseUrl; ReleaseUrl = $ReleaseUrl }) "$Data\profile.json"
 
 Step 'Check'
 $ok = $true

@@ -73,3 +73,9 @@ O-Ringen readout laptop TA31 (10.0.0.40, Windows 10 Enterprise, user funktionar)
 - [x] Battery verdict (verdict.json): DEAD after a test that ran out within 5 min, or 2+ sudden power losses (Kernel-Power 41, no bugcheck, no power button) since the last good test. .40 = DEAD (16:24, 16:28), red line on the wallpaper; .37 = OK.
 - [x] Reader module on every laptop: Acrobat Reader, default for .pdf through the DefaultAssociationsConfiguration policy (applies at sign-in), FeatureLockDown policies for upsell, AI assistant, cloud, welcome screen, messages, updater; AdobeARMservice disabled. Installed on .37 and .40.
 - [ ] Reader EULA still shows at the first start on each laptop (not accepted on anyone's behalf).
+
+## Deltagarservice laptop .46, Config+, Teams, profile tool (2026-10-17)
+
+- [x] siconfig (Config+ 2.12.0 MSI, icon in TOOLS), teams (all Teams variants removed), "Rensa profil" in TOOLS: tested on .40.
+- [x] JSON state files are written beside and moved over: .40's values.json was all zero bytes after its sudden power losses, so single registry values changed by the 10mila template on .40 cannot be put back by restore.ps1 there (snapshot, reg exports and moves are intact).
+- [ ] .46 (user funktionär): not reachable yet (no ping, no ssh). Then: O-Ringen profile with -KeepOnDesktop deltagarservice.

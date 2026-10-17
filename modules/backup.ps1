@@ -52,6 +52,6 @@ $desktops = @("$env:PUBLIC\Desktop") + @(Get-ChildItem C:\Users -Directory | For
   OlaProducts  = @(Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*' -ErrorAction SilentlyContinue | Where-Object DisplayName -eq 'OLA 6' | ForEach-Object PSChildName)
   Desktop      = @($desktops | ForEach-Object { Get-ChildItem $_ -Force -ErrorAction SilentlyContinue | ForEach-Object FullName })
   Printers     = @(Get-Printer | ForEach-Object Name)
-} | ConvertTo-Json -Depth 4 | Set-Content -Encoding UTF8 "$RestoreDir\snapshot.json"
+} | ForEach-Object { Write-JsonFile $_ "$RestoreDir\snapshot.json" }
 Write-Host "saved to $RestoreDir"
 Add-Check { @("restore snapshot in $RestoreDir", ((Test-Path "$RestoreDir\snapshot.json", "$RestoreDir\firewall.wfw", "$RestoreDir\hosts") -notcontains $false)) }

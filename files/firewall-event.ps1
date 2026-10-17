@@ -27,7 +27,7 @@ if ($Mode -eq 'on') {
   # Allow rules that would let more through: switched off now, back on with "off". Inbound core networking (DHCP) stays.
   $core = Get-NetFirewallRule -Group '@FirewallAPI.dll,-25000' -ErrorAction SilentlyContinue | ForEach-Object Name
   $disabled = @(Get-NetFirewallRule -Action Allow -Enabled True | Where-Object { $_.Group -notin $group, '10mila' -and -not ($_.Direction -eq 'Inbound' -and $_.Name -in $core) } | ForEach-Object Name)
-  [pscustomobject]@{ Profiles = $profiles; Disabled = $disabled; On = (Get-Date -Format s) } | ConvertTo-Json -Depth 3 | Set-Content $state
+  [pscustomobject]@{ Profiles = $profiles; Disabled = $disabled; On = (Get-Date -Format s) } | ConvertTo-Json -Depth 3 | Set-Content "$state.tmp"; Move-Item -Force "$state.tmp" $state   # survives a power cut
   try {
   if ($disabled) { Disable-NetFirewallRule -Name $disabled }
   Get-NetFirewallRule -Group $group -ErrorAction SilentlyContinue | Remove-NetFirewallRule

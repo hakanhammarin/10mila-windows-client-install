@@ -18,7 +18,7 @@ $me = $list | Where-Object Name -eq $Name.ToUpper()
 if (-not $me) { throw "$Name is not in computers.csv" }
 $Name = $me.Name; $Function = $me.Function
 Write-Host "$Name  ($Function)"
-[pscustomobject]@{ Name = $Name; Function = $Function; Group = $me.Group; Uppgift = $Uppgift } | ConvertTo-Json | Set-Content -Encoding UTF8 "$Data\client.json"
+Write-JsonFile ([pscustomobject]@{ Name = $Name; Function = $Function; Group = $me.Group; Uppgift = $Uppgift }) "$Data\client.json"
 if ($env:COMPUTERNAME -ne $Name) { Rename-Computer -NewName $Name -Force -WarningAction SilentlyContinue }
 Add-Check { $p = (Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName').ComputerName
   @("computer name $p (now $env:COMPUTERNAME)", ($p -eq $Name)) }

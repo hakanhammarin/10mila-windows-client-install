@@ -25,7 +25,9 @@ curl -fsSLo %TEMP%\restore.ps1 https://raw.githubusercontent.com/hakanhammarin/1
 | backup | saves registry, power, firewall, hosts, OLA6, startup and desktops once, for restore.ps1 | always | always |
 | name | computer name picker by function (`computers.csv`) | x | |
 | region | time zone Stockholm, Swedish date/time format, region Sweden; clock synced | x | x |
+| teams | Microsoft Teams removed (classic, machine-wide, new Teams, Windows 11 chat) and kept out | x | x |
 | sportident | SPORTident USB driver | x | |
+| siconfig | SPORTident Config+ with its icon in TOOLS | x | x |
 | power | never sleep, dim or lock; lid and buttons do nothing; no screen saver | x | x |
 | autologon | automatic sign-in with the account signed in now; password asked for (or `TENMILA_AUTOLOGON_PASSWORD`), kept as an LSA secret | x | x |
 | powerloss | PowerLoss agent at boot | x | |
@@ -38,7 +40,7 @@ curl -fsSLo %TEMP%\restore.ps1 https://raw.githubusercontent.com/hakanhammarin/1
 | firewall | SIRAP TCP 10001 always open; "Brandvägg event" in TOOLS: on = every Windows allow rule off, in only ssh/PowerLoss/mDNS/DHCP, out only private ranges; no internet | x | x |
 | update | "10MILA UPDATE" in TOOLS and at every boot: the one-liner again with this laptop's choices (`C:\ProgramData\10mila\profile.json`) and the versions in git | x | x |
 | wallpaper | BGInfo replacement: Dator, Funktion, Uppgift, the OKI printer IP from hosts and the event firewall state upper right; 10mila: the 10MILA logo lower right (oringen: the O-Ringen banner, `C:\bgi\Funktion.txt` and `Uppgift.txt`; BGInfo off) | x | x |
-| desktop | clean desktop: launch icons and a TOOLS folder, no Recycle Bin, scripts moved to TOOLS, O-Ringen program folders hidden; rows along the top | x | x |
+| desktop | "Rensa profil" in TOOLS (browser data, Downloads, recent, temp, Recycle Bin); `-KeepOnDesktop deltagarservice` archives the rest of an old desktop to Skrivbord-arkiv; clean desktop: launch icons and a TOOLS folder, no Recycle Bin, scripts moved to TOOLS, O-Ringen program folders hidden; rows along the top | x | x |
 | taskbar | taskbar holds only the launch programs; no Search, Task view, Widgets, Chat; tray icons untouched (applies at the next sign-in) | x | x |
 
 Run single modules with `-Modules firewall,receipt`.

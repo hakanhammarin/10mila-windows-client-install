@@ -5,6 +5,7 @@
 $ErrorActionPreference = 'Continue'
 $dir = 'C:\ProgramData\10mila\battery'; New-Item -ItemType Directory -Force $dir | Out-Null
 $runFile = "$dir\run.json"
+function Save-Json($o, $path) { $o | ConvertTo-Json | Set-Content -Encoding UTF8 "$path.tmp"; Move-Item -Force "$path.tmp" $path }   # survives a power cut
 # Many laptops do not publish BatteryStaticData: take the design capacity from the battery report once.
 & powercfg.exe /batteryreport /xml /output "$dir\report.xml" | Out-Null
 $designFromReport = [int]([regex]::Match((Get-Content "$dir\report.xml" -Raw -ErrorAction SilentlyContinue), '<DesignCapacity>(\d+)').Groups[1].Value)
@@ -21,14 +22,15 @@ function Read-Battery {
   }
 }
 function Close-Run($how) {
-  $run = Get-Content -Raw $runFile | ConvertFrom-Json
+  $run = try { Get-Content -Raw $runFile | ConvertFrom-Json } catch { $null }
+  if (-not $run) { Remove-Item $runFile; return }   # damaged by the power cut that ended the run
   $rows = @(Import-Csv $run.File)
   if ($rows) {
     $first = $rows[0]; $last = $rows[-1]
     [pscustomobject]@{
       Start = $first.Time; End = $last.Time; Minutes = [math]::Round(([datetime]$last.Time - [datetime]$first.Time).TotalMinutes)
       FromPercent = $first.Percent; ToPercent = $last.Percent; SOH = $last.SOH; Volt = $last.Volt; Ended = $how; File = $run.File
-    } | ConvertTo-Json | Set-Content -Encoding UTF8 "$dir\last.json"
+    } | ForEach-Object { Save-Json $_ "$dir\last.json" }
   }
   Remove-Item $runFile
   if (Get-Command Update-Verdict -ErrorAction SilentlyContinue) { Update-Verdict }
@@ -49,8 +51,7 @@ function Update-Verdict {
   $why = @()
   if ($short) { $why += "ran out after $($last.Minutes) min ($($last.FromPercent) %)" }
   if ($cuts.Count -ge 2) { $why += "$($cuts.Count) sudden power losses ($(($cuts | ForEach-Object { $_.TimeCreated.ToString('MM-dd HH:mm') }) -join ', '))" }
-  [pscustomobject]@{ Dead = [bool]$why; Evidence = ($why -join '; '); PowerLosses = $cuts.Count; Checked = (Get-Date -Format s) } |
-    ConvertTo-Json | Set-Content -Encoding UTF8 "$dir\verdict.json"
+  Save-Json ([pscustomobject]@{ Dead = [bool]$why; Evidence = ($why -join '; '); PowerLosses = $cuts.Count; Checked = (Get-Date -Format s) }) "$dir\verdict.json"
 }
 Update-Verdict
 Start-ScheduledTask -TaskName '10mila wallpaper' -ErrorAction SilentlyContinue
@@ -61,7 +62,7 @@ while ($true) {
   if (-not $r.OnAC) {
     if (-not (Test-Path $runFile)) {
       $f = "$dir\run-$(Get-Date -Format yyyyMMdd-HHmmss).csv"
-      [pscustomobject]@{ File = $f } | ConvertTo-Json | Set-Content $runFile; $lastRow = [datetime]::MinValue
+      Save-Json ([pscustomobject]@{ File = $f }) $runFile; $lastRow = [datetime]::MinValue
     }
     if (((Get-Date) - $lastRow).TotalSeconds -ge 59) {
       $r | Export-Csv -Append -NoTypeInformation -Encoding UTF8 (Get-Content -Raw $runFile | ConvertFrom-Json).File; $lastRow = Get-Date

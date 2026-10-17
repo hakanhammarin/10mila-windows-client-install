@@ -3,8 +3,7 @@ Step 'Time zone, format and region: Stockholm'
 $rf = "$Data\restore\region.json"
 if (-not (Test-Path $rf)) {   # the old settings, once, for restore.ps1
   New-Item -ItemType Directory -Force (Split-Path $rf) | Out-Null
-  [pscustomobject]@{ TimeZone = (Get-TimeZone).Id; HomeGeo = (Get-WinHomeLocation).GeoId; SystemLocale = (Get-WinSystemLocale).Name; Culture = (Get-Culture).Name; User = $env:USERNAME } |
-    ConvertTo-Json | Set-Content -Encoding UTF8 $rf
+  Write-JsonFile ([pscustomobject]@{ TimeZone = (Get-TimeZone).Id; HomeGeo = (Get-WinHomeLocation).GeoId; SystemLocale = (Get-WinSystemLocale).Name; Culture = (Get-Culture).Name; User = $env:USERNAME }) $rf
 }
 Set-TimeZone -Id 'W. Europe Standard Time'   # Stockholm (CET/CEST)
 Set-WinHomeLocation -GeoId 221               # Sweden
