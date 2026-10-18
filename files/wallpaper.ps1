@@ -19,7 +19,7 @@ $oki = (Get-Content "$env:windir\System32\drivers\etc\hosts" -ErrorAction Silent
 $fw = if (Test-Path 'C:\ProgramData\10mila\firewall-event.ps1') { "Brandv$([char]0xE4)gg event: " + $(if (Test-Path 'C:\ProgramData\10mila\firewall-event.json') { "P$([char]0xC5) (inget internet)" } else { 'AV' }) }
 function HM($m) { $m = [int]$m; if ($m -ge 60) { '{0} h {1} min' -f [math]::Floor($m / 60), ($m % 60) } else { "$m min" } }
 # Battery: the last test (runtime on battery) and the health now.
-$bat = ''
+$bat = ''; $bat2 = ''
 $bl = 'C:\ProgramData\10mila\battery\last.json'
 $soh = try { $f = (Get-CimInstance -Namespace root\wmi BatteryFullChargedCapacity -ErrorAction Stop | Select-Object -First 1).FullChargedCapacity
   $d = (Get-CimInstance -Namespace root\wmi BatteryStaticData -ErrorAction SilentlyContinue | Select-Object -First 1).DesignedCapacity
@@ -28,8 +28,8 @@ $soh = try { $f = (Get-CimInstance -Namespace root\wmi BatteryFullChargedCapacit
 if (Test-Path $bl) {
   $t = Get-Content -Raw $bl | ConvertFrom-Json
   $dur = if ($t.Minutes -ge 60) { '{0} h {1} min' -f [math]::Floor($t.Minutes / 60), ($t.Minutes % 60) } else { "$($t.Minutes) min" }
-  $bat = "Batteri: $dur ($($t.FromPercent) -> $($t.ToPercent) %$(if ($t.Ended -eq 'battery ran out') { ', tog slut' } elseif ($t.Ended -eq 'shut down') { ', avst$([char]0xE4)ngd' }))"
-  if ($t.FullMinutes) { $bat += ", r$([char]0xE4)cker ca $(HM $t.FullMinutes) fr$([char]0xE5)n full" }
+  $bat = "Batteri: $dur ($($t.FromPercent) -> $($t.ToPercent) %$(if ($t.Ended -eq 'battery ran out') { ', tog slut' } elseif ($t.Ended -eq 'shut down') { ", avst$([char]0xE4)ngd" }))"
+  if ($t.FullMinutes) { $bat2 = "Batteriet r$([char]0xE4)cker ca $(HM $t.FullMinutes) fr$([char]0xE5)n full" }
 }
 $sohLine = if ($soh) { "Batteri SOH: $soh %" }
 $runf = 'C:\ProgramData\10mila\battery\run.json'   # on battery now, before there is an estimate
@@ -58,7 +58,7 @@ $fmt = New-Object Drawing.StringFormat; $fmt.Alignment = 'Far'
 $big = New-Object Drawing.Font 'Arial', ([int]($h / 20)), ([Drawing.FontStyle]::Bold), ([Drawing.GraphicsUnit]::Pixel)
 $small = New-Object Drawing.Font 'Arial', ([int]($h / 34)), ([Drawing.FontStyle]::Regular), ([Drawing.GraphicsUnit]::Pixel)
 $m = [int]($h / 40); $y = $m
-foreach ($line in @(@("Dator: $dator", $big), @("Funktion: $funktion", $small), @("Uppgift: $uppgift", $small), @("Skrivare OKI: $oki", $small), @($fw, $small), @($bat, $small), @($sohLine, $small))) {
+foreach ($line in @(@("Dator: $dator", $big), @("Funktion: $funktion", $small), @("Uppgift: $uppgift", $small), @("Skrivare OKI: $oki", $small), @($fw, $small), @($bat, $small), @($bat2, $small), @($sohLine, $small))) {
   if (-not "$($line[0])".Trim() -or $line[0] -match ':\s*$') { continue }   # empty value: leave the line out
   $brush = $ink; if ($line[0] -like 'Batteri D*TT*') { $brush = [Drawing.Brushes]::DarkRed; $line[1] = New-Object Drawing.Font 'Arial', ([int]($h / 28)), ([Drawing.FontStyle]::Bold), ([Drawing.GraphicsUnit]::Pixel) }
   $g.DrawString($line[0], $line[1], $brush, [single]($w - $m), [single]$y, $fmt); $y += $line[1].Height * 1.15
