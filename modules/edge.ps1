@@ -31,9 +31,25 @@ foreach ($p in @(@('HideFirstRunExperience', 1), @('AutoImportAtFirstRun', 4), @
                  @('ShowHomeButton', 1), @('RestoreOnStartup', 4))) {
   Set-Value $e $p[0] $p[1]
 }
+# Edge follows the home page, new tab and search engine policies only on a managed device. These laptops are managed by
+# this solution (Hakan, 2026-10-18): they carry the local management enrollment marker Edge looks for. restore.ps1 removes it.
+$mdm = 'FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF'
+Set-Value "HKLM:\SOFTWARE\Microsoft\Enrollments\$mdm" EnrollmentState 1
+Set-Value "HKLM:\SOFTWARE\Microsoft\Enrollments\$mdm" EnrollmentType 0
+Set-Value "HKLM:\SOFTWARE\Microsoft\Enrollments\$mdm" IsFederated 0
+$oma = "HKLM:\SOFTWARE\Microsoft\Provisioning\OMADM\Accounts\$mdm"
+Set-Value $oma Flags 0xd6fb7f
+Set-Value $oma AcctUId ('0x' + '0' * 72) 'String'
+Set-Value $oma RoamingCount 0
+Set-Value $oma SslClientCertReference ('MY;User;' + '0' * 40) 'String'
+Set-Value $oma ProtoVer '1.2' 'String'
 Set-Value $e HomepageLocation $url 'String'
 Set-Value "$e\RestoreOnStartupURLs" '1' $url 'String'
-if ((Get-ItemProperty $e -ErrorAction SilentlyContinue).NewTabPageLocation -like 'file:*') { Remove-ItemProperty $e NewTabPageLocation }   # Edge does not take a file page as new tab
+Set-Value $e DefaultSearchProviderEnabled 1
+Set-Value $e DefaultSearchProviderName 'Google' 'String'
+Set-Value $e DefaultSearchProviderSearchURL '{google:baseURL}search?q={searchTerms}' 'String'
+Set-Value $e DefaultSearchProviderSuggestURL '{google:baseURL}complete/search?output=chrome&q={searchTerms}' 'String'
+Set-Value $e NewTabPageLocation $url 'String'   # every new tab
 # Edge updates put "Microsoft Edge" back on the desktop: not on these desktops (Edge is on the start page and the taskbar).
 Set-Value 'HKLM:\SOFTWARE\Policies\Microsoft\EdgeUpdate' 'CreateDesktopShortcutDefault' 0
 Set-Value 'HKLM:\SOFTWARE\Policies\Microsoft\EdgeUpdate' 'CreateDesktopShortcut{56EB18F8-B008-4CBD-B6D2-8C97FE7E9062}' 0

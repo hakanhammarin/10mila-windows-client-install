@@ -113,6 +113,11 @@ if (Test-Path "$R\region.json") {   # time zone, region, locale as they were
   Write-Host "time zone $($rg.TimeZone), region $($rg.HomeGeo), locale $($rg.SystemLocale)"
 }
 
+# The management enrollment marker of the edge module: its keys go entirely (values.json emptied them).
+foreach ($k in 'HKLM:\SOFTWARE\Microsoft\Enrollments\FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF', 'HKLM:\SOFTWARE\Microsoft\Provisioning\OMADM\Accounts\FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF') {
+  if ((Test-Path $k) -and -not (Get-ItemProperty $k -ErrorAction SilentlyContinue).PSObject.Properties.Where({ $_.Name -notlike 'PS*' }).Count) { Remove-Item -Recurse -Force $k; Write-Host "removed $k" }
+}
+
 Step 'Power, network adapters, firewall, hosts'
 foreach ($v in $snap.PowerValues) {
   & cmd.exe /c "powercfg /setacvalueindex $($snap.PowerScheme) $($v.Setting) $($v.AC) >nul 2>&1"
