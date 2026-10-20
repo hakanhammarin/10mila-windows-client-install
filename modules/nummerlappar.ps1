@@ -1,6 +1,7 @@
-# nummerlappar.ps1 - bib printing station (PRINT-xx): OKI C542 PS with paper "10mila bib", Python, Acrobat Reader, C:\bibs.
+# nummerlappar.ps1 - bib printing station (PRINT-xx): native bib printing in C:\bibs (Ghostscript, raw port 9100), OKI C542 PS
+# with paper "10mila bib" for the spooler backend, Python, the generator in C:\bibs-prod.
 if ($me.Group -eq 'Nummerlappar') {
-  Step 'Nummerlappar: printer, Python, Acrobat Reader, C:\bibs'
+  Step 'Nummerlappar: printer, Python, native bib printing in C:\bibs'
   $hosts = "$env:windir\System32\drivers\etc\hosts"
   $h = @(Get-Content $hosts | Where-Object { $_ -notmatch '\sOKIC542PS\s*$' }) + "$BibPrinterIp OKIC542PS"
   foreach ($try in 1..5) { try { Set-Content -Encoding ASCII $hosts $h -ErrorAction Stop; break } catch { if ($try -eq 5) { throw }; Start-Sleep 2 } }   # a virus scan can hold the file a moment
@@ -51,21 +52,24 @@ if ($me.Group -eq 'Nummerlappar') {
   }
   & $py -m pip install --quiet --disable-pip-version-check --no-warn-script-location reportlab pypdf
   $acro = 'C:\Program Files\Adobe\Acrobat DC\Acrobat\Acrobat.exe'   # installed by the reader module
-  # Print station (C:\bibs, PDFs in C:\bibs\out_bibs are kept) and the generator (C:\bibs-prod).
-  foreach ($r in @(@{ Repo = '10mila_bib_print_via_acrobat_reader_on_windows'; Dir = 'C:\bibs' }, @{ Repo = '10mila_bibs_prod'; Dir = 'C:\bibs-prod' })) {
+  # Print station C:\bibs: 10mila_bib_print_native_on_windows (Ghostscript to PostScript, raw to the printer on port 9100,
+  # no Acrobat). The legacy Acrobat printing (acrobat_print_2.py and its settings) goes; the PDFs in out_bibs stay, and
+  # a settings.py that is already the native one is kept (local printer choices). Generator: 10mila_bibs_prod in C:\bibs-prod.
+  foreach ($old in 'acrobat_print_2.py', '__pycache__', 'Skrivarinst*.pdf') { Remove-Item -Recurse -Force "C:\bibs\$old" -ErrorAction SilentlyContinue }
+  $keepSettings = (Test-Path 'C:\bibs\settings.py') -and (Select-String -Path 'C:\bibs\settings.py' -Pattern 'WIN_PRINT_BACKEND' -Quiet)
+  foreach ($r in @(@{ Repo = '10mila_bib_print_native_on_windows'; Dir = 'C:\bibs' }, @{ Repo = '10mila_bibs_prod'; Dir = 'C:\bibs-prod' })) {
     Get-File "https://codeload.github.com/hakanhammarin/$($r.Repo)/zip/HEAD" "$Tmp\$($r.Repo).zip" | Out-Null
     Remove-Item -Recurse -Force "$Tmp\$($r.Repo)" -ErrorAction SilentlyContinue
     Expand-Archive -Force "$Tmp\$($r.Repo).zip" "$Tmp\$($r.Repo)"
     $src = (Get-ChildItem "$Tmp\$($r.Repo)" -Directory | Select-Object -First 1).FullName
     New-Item -ItemType Directory -Force $r.Dir | Out-Null
-    Get-ChildItem $src | Where-Object Name -notlike 'out_bibs*' | Copy-Item -Destination $r.Dir -Recurse -Force
+    Get-ChildItem $src | Where-Object { $_.Name -notlike 'out_bibs*' -and -not ($keepSettings -and $r.Dir -eq 'C:\bibs' -and $_.Name -eq 'settings.py') } | Copy-Item -Destination $r.Dir -Recurse -Force
   }
   New-Item -ItemType Directory -Force 'C:\bibs\out_bibs\printed' | Out-Null
-  # Descending order (the OKI stacks face down): until the bib repo has it, change the one loop line here.
-  # ponytail: text patch; drop it when 10mila_bib_print_via_acrobat_reader_on_windows prints descending itself.
-  $ap = 'C:\bibs\acrobat_print_2.py'; $code = [IO.File]::ReadAllText($ap)
-  $code = $code.Replace('for i in range(start_nr, start_nr + antal):', 'for i in range(start_nr + antal - 1, start_nr - 1, -1):   # descending')
-  [IO.File]::WriteAllText($ap, $code)
+  # Ghostscript and pdftops in C:\bibs\tools need the Visual C++ runtime.
+  if ((Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64' -ErrorAction SilentlyContinue).Installed -ne 1) {
+    Start-Process -Wait 'C:\bibs\tools\vcredist_x64.exe' '/install /quiet /norestart'
+  }
   Copy-Item -Force 'C:\bibs\nummerlappar.cmd' "$env:PUBLIC\Desktop\nummerlappar.cmd"
 }
 if ($me.Group -eq 'Nummerlappar') {
@@ -75,6 +79,7 @@ if ($me.Group -eq 'Nummerlappar') {
   Add-Check { [xml]$t = (Get-PrintConfiguration OKIC542PS -ErrorAction SilentlyContinue).PrintTicketXML
     $paper = ([regex]::Match($t.OuterXml, 'PageMediaSize"><psf:Option name="([^"]+)"')).Groups[1].Value
     @("OKIC542PS defaults to paper 10mila bib ($paper), landscape", (($paper -like '*UserForm*') -and ($t.OuterXml -match 'psk:Landscape'))) }
-  Add-Check { @('bibs print in descending order', ((Get-Content 'C:\bibs\acrobat_print_2.py' -Raw) -match 'range\(start_nr \+ antal - 1, start_nr - 1, -1\)')) }
-  Add-Check { @('C:\bibs and C:\bibs-prod', ((Test-Path 'C:\bibs\acrobat_print_2.py') -and (Test-Path 'C:\bibs-prod\bib_generator_optimized.py'))) }
+  Add-Check { & 'C:\bibs\tools\gs\bin\gswin64c.exe' -q -dNOPAUSE -dBATCH -sDEVICE=nullpage -c quit 2>$null | Out-Null; $gs = $LASTEXITCODE -eq 0
+    @('native bib printing in C:\bibs (Ghostscript runs, no Acrobat script), generator in C:\bibs-prod', ($gs -and (Test-Path 'C:\bibs\bib_print.py') -and -not (Test-Path 'C:\bibs\acrobat_print_2.py') -and
+      (Test-Path 'C:\bibs-prod\bib_generator_optimized.py') -and ((Get-Content "$env:PUBLIC\Desktop\nummerlappar.cmd" -Raw) -match 'bib_print\.py'))) }
 }
