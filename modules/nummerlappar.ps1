@@ -70,7 +70,11 @@ if ($me.Group -eq 'Nummerlappar') {
   if ((Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64' -ErrorAction SilentlyContinue).Installed -ne 1) {
     Start-Process -Wait 'C:\bibs\tools\vcredist_x64.exe' '/install /quiet /norestart'
   }
-  Copy-Item -Force 'C:\bibs\nummerlappar.cmd' "$env:PUBLIC\Desktop\nummerlappar.cmd"
+  # Desktop icon: a shortcut to C:\bibs\nummerlappar.cmd with a bib as icon (a .cmd file cannot have its own icon).
+  Remove-Item "$env:PUBLIC\Desktop\nummerlappar.cmd" -ErrorAction SilentlyContinue
+  Get-File "$BaseUrl/files/bib.ico" "$Data\bib.ico" | Out-Null
+  $sc = (New-Object -ComObject WScript.Shell).CreateShortcut("$env:PUBLIC\Desktop\Nummerlappar.lnk")
+  $sc.TargetPath = 'C:\bibs\nummerlappar.cmd'; $sc.WorkingDirectory = 'C:\bibs'; $sc.IconLocation = "$Data\bib.ico,0"; $sc.Save()
 }
 if ($me.Group -eq 'Nummerlappar') {
   Add-Check { @('printer OKIC542PS with the OKI PS driver', ((Get-Printer OKIC542PS -ErrorAction SilentlyContinue).DriverName -eq 'OKI C542 PS')) }
@@ -81,5 +85,5 @@ if ($me.Group -eq 'Nummerlappar') {
     @("OKIC542PS defaults to paper 10mila bib ($paper), landscape", (($paper -like '*UserForm*') -and ($t.OuterXml -match 'psk:Landscape'))) }
   Add-Check { & 'C:\bibs\tools\gs\bin\gswin64c.exe' -q -dNOPAUSE -dBATCH -sDEVICE=nullpage -c quit 2>$null | Out-Null; $gs = $LASTEXITCODE -eq 0
     @('native bib printing in C:\bibs (Ghostscript runs, no Acrobat script), generator in C:\bibs-prod', ($gs -and (Test-Path 'C:\bibs\bib_print.py') -and -not (Test-Path 'C:\bibs\acrobat_print_2.py') -and
-      (Test-Path 'C:\bibs-prod\bib_generator_optimized.py') -and ((Get-Content "$env:PUBLIC\Desktop\nummerlappar.cmd" -Raw) -match 'bib_print\.py'))) }
+      (Test-Path 'C:\bibs-prod\bib_generator_optimized.py') -and (Test-Path "$env:PUBLIC\Desktop\Nummerlappar.lnk") -and ((Get-Content 'C:\bibs\nummerlappar.cmd' -Raw) -match 'bib_print\.py'))) }
 }

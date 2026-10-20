@@ -150,7 +150,7 @@ foreach ($d in Get-ChildItem "$R\startup" -Directory -ErrorAction SilentlyContin
 }
 $desktops = @("$env:PUBLIC\Desktop") + @(Get-ChildItem C:\Users -Directory | ForEach-Object { "$($_.FullName)\Desktop" } | Where-Object { Test-Path $_ }) | Select-Object -Unique
 foreach ($f in $desktops | ForEach-Object { Get-ChildItem $_ -Force -ErrorAction SilentlyContinue }) {
-  if ($f.FullName -notin $snap.Desktop -and $f.Name -match '^(OLA-Klient|TA-Klient|nummerlappar|Brandv.gg event)\.(lnk|cmd)$') { Remove-Item -Force $f.FullName -ErrorAction SilentlyContinue; Write-Host "removed $($f.FullName)" }
+  if ($f.FullName -notin $snap.Desktop -and $f.Name -match '^(OLA-Klient|TA-Klient|nummerlappar|Nummerlappar|Brandv.gg event)\.(lnk|cmd)$') { Remove-Item -Force $f.FullName -ErrorAction SilentlyContinue; Write-Host "removed $($f.FullName)" }
 }
 if ($env:COMPUTERNAME -ne $snap.ComputerName -or (Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName').ComputerName -ne $snap.ComputerName) {
   Rename-Computer -NewName $snap.ComputerName -Force -WarningAction SilentlyContinue; Write-Host "name back to $($snap.ComputerName) at restart"

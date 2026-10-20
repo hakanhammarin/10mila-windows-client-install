@@ -26,8 +26,10 @@ foreach ($f in 'ola.properties', 'SOFT.properties') {
     Set-Content -Encoding ASCII "$olaCfg\$f"
 }
 Copy-Item -Force 'C:\ProgramData\Microsoft\Windows\Start Menu\Programs\OLA 6\OLA-Klient.lnk' "$env:PUBLIC\Desktop\OLA-Klient.lnk"
+foreach ($i in 'ola', 'ta') { Get-File "$BaseUrl/files/$i.ico" "$Data\$i.ico" | Out-Null }   # "OLA" / "TA" on light Svensk Orientering colours
+$sc = (New-Object -ComObject WScript.Shell).CreateShortcut("$env:PUBLIC\Desktop\OLA-Klient.lnk"); $sc.IconLocation = "$Data\ola.ico,0"; $sc.Save()
 $sc = (New-Object -ComObject WScript.Shell).CreateShortcut("$env:PUBLIC\Desktop\TA-Klient.lnk")   # the MSI has no shortcut for it
-$sc.TargetPath = "$ola\bin\OLA-taclient.bat"; $sc.WorkingDirectory = "$ola\"; $sc.WindowStyle = 7; $sc.IconLocation = "$ola\bin\javaw.exe"; $sc.Save()
+$sc.TargetPath = "$ola\bin\OLA-taclient.bat"; $sc.WorkingDirectory = "$ola\"; $sc.WindowStyle = 7; $sc.IconLocation = "$Data\ta.ico,0"; $sc.Save()
 Add-Check {
   $olaNow = @(Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*' -ErrorAction SilentlyContinue | Where-Object DisplayName -eq 'OLA 6')
   @("OLA $OlaVersion and its properties", (($olaNow.Count -eq 1) -and ($olaNow[0].DisplayVersion -eq $OlaVersion) -and

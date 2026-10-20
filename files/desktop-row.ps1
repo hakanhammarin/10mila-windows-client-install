@@ -1,6 +1,6 @@
 # desktop-row.ps1 - runs at logon in the user's session (task "10mila desktop row"): puts the desktop icons in rows
 # along the top, launch icons first, so the middle of the wallpaper (the O-Ringen banner) stays clear.
-param([string[]]$First = @('OLA-Klient', 'OLA', 'TA-Klient', 'nummerlappar', 'TOOLS'))
+param([string[]]$First = @('OLA-Klient', 'OLA', 'TA-Klient', 'Nummerlappar', 'nummerlappar', 'TOOLS'))
 $ErrorActionPreference = 'Stop'
 Start-Sleep 8   # Explorer has to finish drawing the desktop
 Add-Type -TypeDefinition @'
