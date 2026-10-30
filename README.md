@@ -57,7 +57,7 @@ curl -fsSLo %TEMP%\restore.ps1 https://raw.githubusercontent.com/hakanhammarin/1
 | battery | battery test: on battery a row a minute (time, %, mWh, SOH, volts) in `C:\ProgramData\10mila\battery`; when the charger is back or after it ran out, runtime and SOH on the wallpaper | x | x |
 | firewall | SIRAP TCP 10001 always open; "Brandvägg event" in TOOLS: on = every Windows allow rule off, in only ssh/PowerLoss/mDNS/DHCP, out only private ranges; no internet | x | x |
 | update | "10MILA UPDATE" in TOOLS and at every boot: the one-liner again with this laptop's choices (`C:\ProgramData\10mila\profile.json`) and the versions in git | x | x |
-| wallpaper | BGInfo replacement: Dator, Funktion, Uppgift, the OKI printer IP from hosts and the event firewall state upper right; 10mila: the 10MILA logo lower right (oringen: the O-Ringen banner, `C:\bgi\Funktion.txt` and `Uppgift.txt`; BGInfo off) | x | x |
+| wallpaper | BGInfo replacement: Dator, IP (redrawn when a network connects), Funktion, Uppgift, the OKI printer IP from hosts and the event firewall state upper right; 10mila: the 10MILA logo lower right (oringen: the O-Ringen banner, `C:\bgi\Funktion.txt` and `Uppgift.txt`; BGInfo off) | x | x |
 | desktop | "Rensa profil" in TOOLS (Microsoft accounts in Windows and Edge, browser data, Downloads, recent, temp, Recycle Bin); `-KeepOnDesktop deltagarservice` archives the rest of an old desktop to Skrivbord-arkiv; clean desktop: launch icons and a TOOLS folder, no Recycle Bin, scripts moved to TOOLS, O-Ringen program folders hidden; rows along the top | x | x |
 | taskbar | taskbar holds only the launch programs; no Search, Task view, Widgets, Chat; tray icons untouched (applies at the next sign-in) | x | x |
 

@@ -97,3 +97,4 @@ O-Ringen readout laptop TA31 (10.0.0.40, Windows 10 Enterprise, user funktionar)
 - [x] Desktop icons: OLA-Klient and TA-Klient get "OLA"/"TA" in black on a very light Svensk Orientering background (files/ola.ico, ta.ico); Nummerlappar is a shortcut with a bib icon (files/bib.ico) to C:\bibs\nummerlappar.cmd. Tested on .37 (PASS PRINT-01).
 - [x] O-Ringen profile gets the OLA client too (module ola), with the new OLA and TA icons; server and event from -OlaServer/-OlaEvent (default the 10MILA ones).
 - [x] Edge: TranslateEnabled=0, no offers to translate on any laptop (both profiles, Håkan 2026-10-30).
+- [x] Wallpaper: IP line (all IPv4 addresses of the laptop) under Dator, redrawn when a network connects (event 10000). Not run on a laptop yet: .37/.40/.46/.49 were offline. Check it, and the fallback message "no network trigger" in install.log, on the next laptop that is up.

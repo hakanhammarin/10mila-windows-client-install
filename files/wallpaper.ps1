@@ -1,5 +1,5 @@
-# wallpaper.ps1 - BGInfo replacement, run at every logon in the user's session (task "10mila wallpaper").
-# Draws Dator, Funktion and Uppgift in the upper right corner and sets it as this user's wallpaper.
+# wallpaper.ps1 - BGInfo replacement, run at every logon and network connect in the user's session (task "10mila wallpaper").
+# Draws Dator, IP, Funktion and Uppgift in the upper right corner and sets it as this user's wallpaper.
 # Style from C:\ProgramData\10mila\wallpaper.json: 10mila = plain light grey, oringen = O-Ringen banner (C:\bgi\o_ringen_cover.jpg).
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing, System.Windows.Forms
@@ -16,6 +16,8 @@ Add-Type -Namespace W -Name Dpi -MemberDefinition '[DllImport("user32.dll")] pub
 [W.Dpi]::SetProcessDPIAware() | Out-Null   # real pixels, not the scaled size at 125/150 %
 # The bib printer's address as the hosts file has it (Nummerlappar laptops).
 $oki = (Get-Content "$env:windir\System32\drivers\etc\hosts" -ErrorAction SilentlyContinue | Where-Object { $_ -match '^\s*([\d.]+)\s+OKIC542PS\s*$' } | Select-Object -Last 1) -replace '^\s*([\d.]+).*', '$1'
+# This laptop's addresses, also with both Wi-Fi and cable up. No address yet: the line is left out, the task runs again when the network connects.
+$ip = @(Get-NetIPAddress -AddressFamily IPv4 -AddressState Preferred -ErrorAction SilentlyContinue | Where-Object { $_.IPAddress -notmatch '^(127|169\.254)\.' -and $_.InterfaceAlias -notmatch 'vEthernet|Loopback|VMware|VirtualBox' } | ForEach-Object IPAddress) -join ', '
 $fw = if (Test-Path 'C:\ProgramData\10mila\firewall-event.ps1') { "Brandv$([char]0xE4)gg event: " + $(if (Test-Path 'C:\ProgramData\10mila\firewall-event.json') { "P$([char]0xC5) (inget internet)" } else { 'AV' }) }
 function HM($m) { $m = [int]$m; if ($m -ge 60) { '{0} h {1} min' -f [math]::Floor($m / 60), ($m % 60) } else { "$m min" } }
 # Battery: the last test (runtime on battery) and the health now.
@@ -58,7 +60,7 @@ $fmt = New-Object Drawing.StringFormat; $fmt.Alignment = 'Far'
 $big = New-Object Drawing.Font 'Arial', ([int]($h / 20)), ([Drawing.FontStyle]::Bold), ([Drawing.GraphicsUnit]::Pixel)
 $small = New-Object Drawing.Font 'Arial', ([int]($h / 34)), ([Drawing.FontStyle]::Regular), ([Drawing.GraphicsUnit]::Pixel)
 $m = [int]($h / 40); $y = $m
-foreach ($line in @(@("Dator: $dator", $big), @("Funktion: $funktion", $small), @("Uppgift: $uppgift", $small), @("Skrivare OKI: $oki", $small), @($fw, $small), @($bat, $small), @($bat2, $small), @($sohLine, $small))) {
+foreach ($line in @(@("Dator: $dator", $big), @("IP: $ip", $small), @("Funktion: $funktion", $small), @("Uppgift: $uppgift", $small), @("Skrivare OKI: $oki", $small), @($fw, $small), @($bat, $small), @($bat2, $small), @($sohLine, $small))) {
   if (-not "$($line[0])".Trim() -or $line[0] -match ':\s*$') { continue }   # empty value: leave the line out
   $brush = $ink; if ($line[0] -like 'Batteri D*TT*') { $brush = [Drawing.Brushes]::DarkRed; $line[1] = New-Object Drawing.Font 'Arial', ([int]($h / 28)), ([Drawing.FontStyle]::Bold), ([Drawing.GraphicsUnit]::Pixel) }
   $g.DrawString($line[0], $line[1], $brush, [single]($w - $m), [single]$y, $fmt); $y += $line[1].Height * 1.15

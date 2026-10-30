@@ -1,4 +1,4 @@
-# wallpaper.ps1 - BGInfo replacement: Dator, Funktion, Uppgift in the upper right corner, redrawn at every logon.
+# wallpaper.ps1 - BGInfo replacement: Dator, IP, Funktion, Uppgift in the upper right corner, redrawn at every logon and network connect.
 # 10mila: light grey, values from client.json. oringen: the O-Ringen banner, values from C:\bgi\Funktion.txt and Uppgift.txt. BGInfo is switched off on both.
 Step 'Wallpaper'
 $style = if ($Setup -eq 'oringen') { 'oringen' } else { '10mila' }
@@ -34,9 +34,17 @@ ForEach-UserHive { param($key, $user)
 }
 Get-File "$BaseUrl/files/hidden.vbs" "$Data\hidden.vbs" | Out-Null   # no window, no lost focus
 $act = New-ScheduledTaskAction -Execute wscript.exe -Argument "`"$Data\hidden.vbs`" `"$Data\wallpaper.ps1`""
-Register-ScheduledTask -Force -TaskName '10mila wallpaper' -Action $act -Trigger (New-ScheduledTaskTrigger -AtLogOn) `
-  -Settings (New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries) `
-  -Principal (New-ScheduledTaskPrincipal -GroupId 'S-1-5-32-545') | Out-Null   # Users: runs in each user's own session
+$wpTask = @{ TaskName = '10mila wallpaper'; Action = $act; Settings = (New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries)
+  Principal = (New-ScheduledTaskPrincipal -GroupId 'S-1-5-32-545') }   # Users: runs in each user's own session
+$logon = New-ScheduledTaskTrigger -AtLogOn
+try {   # also when a network connects: the IP line would otherwise show the address from logon
+  $netUp = New-CimInstance -ClientOnly -CimClass (Get-CimClass -Namespace Root/Microsoft/Windows/TaskScheduler -ClassName MSFT_TaskEventTrigger) -Property @{ Enabled = $true; Delay = 'PT10S'
+    Subscription = '<QueryList><Query Id="0" Path="Microsoft-Windows-NetworkProfile/Operational"><Select Path="Microsoft-Windows-NetworkProfile/Operational">*[System[EventID=10000]]</Select></Query></QueryList>' }
+  Register-ScheduledTask -Force @wpTask -Trigger @($logon, $netUp) | Out-Null
+} catch {   # ponytail: logon only is still a working wallpaper, a stale IP line is no reason to stop the install
+  Write-Host "wallpaper: no network trigger ($($_.Exception.Message)), logon only" -ForegroundColor Yellow
+  Register-ScheduledTask -Force @wpTask -Trigger $logon | Out-Null
+}
 Start-ScheduledTask -TaskName '10mila wallpaper'   # now, for whoever is logged on
 Add-Check { @("wallpaper ($style) at every logon", ((Test-Path "$Data\wallpaper.ps1") -and (Get-ScheduledTask -TaskName '10mila wallpaper' -ErrorAction SilentlyContinue))) }
 Add-Check { @('BGInfo not started at logon', -not (Get-CimInstance Win32_StartupCommand | Where-Object Command -match 'BGI|bginfo')) }
