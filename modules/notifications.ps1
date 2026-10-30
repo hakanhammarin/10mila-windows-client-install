@@ -17,5 +17,9 @@ $wsc = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender Security Center\Notif
 Set-Value $wsc DisableNotifications 1; Set-Value $wsc DisableEnhancedNotifications 1
 Set-Value 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate' SetUpdateNotificationLevel 2   # no update pop-ups
 Set-Value 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate' UpdateNotificationLevel 2
-Add-Check { @('Windows notifications off', ((Get-ItemProperty 'HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender Security Center\Notifications' -ErrorAction SilentlyContinue).DisableNotifications -eq 1 -and
-  (Get-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\PushNotifications" -ErrorAction SilentlyContinue).ToastEnabled -eq 0)) }
+# Every user's hive, not HKCU: the boot update runs as SYSTEM, whose own hive never gets these values.
+Add-Check {
+  $on = @(ForEach-UserHive { param($key, $user)
+    if ((Get-ItemProperty "Registry::$($key -replace '^HKU\\', 'HKEY_USERS\')\Software\Microsoft\Windows\CurrentVersion\PushNotifications" -ErrorAction SilentlyContinue).ToastEnabled -ne 0) { $user } })
+  @('Windows notifications off', ((Get-ItemProperty 'HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender Security Center\Notifications' -ErrorAction SilentlyContinue).DisableNotifications -eq 1 -and $on.Count -eq 0))
+}
