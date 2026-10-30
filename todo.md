@@ -96,3 +96,4 @@ O-Ringen readout laptop TA31 (10.0.0.40, Windows 10 Enterprise, user funktionar)
 - [x] Nummerlappar: native bib printing (10mila_bib_print_native_on_windows: Ghostscript, raw 9100, no Acrobat) in C:\bibs; legacy acrobat_print_2.py, its settings and the descending patch removed; a native settings.py on the laptop is kept; VC++ runtime installed when missing. PASS on .37, run_tests.py info: Ghostscript 10.04, pdftops 24.08, VC++ present.
 - [x] Desktop icons: OLA-Klient and TA-Klient get "OLA"/"TA" in black on a very light Svensk Orientering background (files/ola.ico, ta.ico); Nummerlappar is a shortcut with a bib icon (files/bib.ico) to C:\bibs\nummerlappar.cmd. Tested on .37 (PASS PRINT-01).
 - [x] O-Ringen profile gets the OLA client too (module ola), with the new OLA and TA icons; server and event from -OlaServer/-OlaEvent (default the 10MILA ones).
+- [x] Edge: TranslateEnabled=0, no offers to translate on any laptop (both profiles, Håkan 2026-10-30).

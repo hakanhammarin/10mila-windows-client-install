@@ -27,7 +27,7 @@ foreach ($p in @(@('HideFirstRunExperience', 1), @('AutoImportAtFirstRun', 4), @
                  @('PersonalizationReportingEnabled', 0), @('EdgeShoppingAssistantEnabled', 0), @('ShowMicrosoftRewards', 0), @('HubsSidebarEnabled', 0),
                  @('Microsoft365CopilotChatIconEnabled', 0), @('CopilotPageContext', 0), @('EdgeFollowEnabled', 0), @('StartupBoostEnabled', 0), @('BackgroundModeEnabled', 0),
                  @('NewTabPageContentEnabled', 0), @('NewTabPageQuickLinksEnabled', 0), @('NewTabPageHideDefaultTopSites', 1), @('NewTabPageAllowedBackgroundTypes', 3),
-                 @('UserFeedbackAllowed', 0), @('DiagnosticData', 0), @('ConfigureDoNotTrack', 1), @('PasswordManagerEnabled', 0), @('AutofillAddressEnabled', 0), @('AutofillCreditCardEnabled', 0),
+                 @('TranslateEnabled', 0), @('UserFeedbackAllowed', 0), @('DiagnosticData', 0), @('ConfigureDoNotTrack', 1), @('PasswordManagerEnabled', 0), @('AutofillAddressEnabled', 0), @('AutofillCreditCardEnabled', 0),
                  @('ShowHomeButton', 1), @('RestoreOnStartup', 4))) {
   Set-Value $e $p[0] $p[1]
 }
