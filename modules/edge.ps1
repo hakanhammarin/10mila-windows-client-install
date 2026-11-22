@@ -11,7 +11,7 @@ if ($Setup -eq 'oringen') {
   if (Test-Path 'C:\bgi\o_ringen_cover.jpg') { Copy-Item -Force 'C:\bgi\o_ringen_cover.jpg' "$start\bg.jpg" }
   $v = @{ TITLE = 'O-Ringen'; BG = '#f5f4f2'; IMAGE = 'bg.jpg'; IMGPOS = '35%'; IMGSIZE = '100% auto'; ACCENT = '#d4145a' }
 } else {
-  $links += @(@('10MILA', 'https://10mila.se'), @('10MILA online', 'https://online.10mila.se'))
+  $links += @(@('10MILA', 'https://10mila.se'), @('10MILA online', 'https://online.10mila.se'), @('Arenameny', 'http://arenamenu.local/'), @('Arenameny (IP)', 'http://10.0.0.225/'))
   Get-File "$BaseUrl/files/10mila-logo.png" "$start\bg.png" | Out-Null
   $v = @{ TITLE = '10MILA'; BG = '#bebebe'; IMAGE = 'bg.png'; IMGPOS = '30%'; IMGSIZE = 'auto 45vh'; ACCENT = '#008a4b' }
 }
