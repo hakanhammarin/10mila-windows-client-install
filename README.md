@@ -66,6 +66,21 @@ Run single modules with `-Modules firewall,receipt`.
 
 **Freeze windows:** `freeze.csv` lists date-time windows (race weekend, rehearsal) when install and update refuse to run (exit 3, nothing changed). Test with `-SimulateNow "2027-05-01 10:00"`. The event firewall blocks GitHub anyway while it is on. Options: `-Function "Check IN"`, `-Name TA-7K2P` (keep a name), `-Uppgift "..."`, `-OlaServer 192.168.1.21`, `-OlaEvent "..."`, `-OlaVersion 6.6.2`, `-Reboot`, `-BaseUrl` / `-ReleaseUrl` (test from another host).
 
+## Chase start station (jaktstart)
+
+Function Jaktstart, name CHASE-xx.
+
+- **StarterClock 1.6.0.0**: Tak-Soft's Microsoft Store app 9WZDNCRFJ937 (package `OTAKRD.StarterClock`), provisioned for every user with its x64 dependencies (VCLibs 140, .NET Native 2.2 framework and runtime). The old ClickOnce StarterClock (2013) is removed.
+- **Packages from the LAN.** The crew laptops run Windows LTSC without the Store, so the utility server serves the packages at `http://<utility>:8097/starterclock/<file>`. `-StarterClockUrl` sets the address; the default `http://10.0.0.229:8097/starterclock` is the lab, so give the race network's utility address on race day. The packages are never in git or in the public GitHub release; the admin side copies them from its local `dist/` to the utility server.
+- **Desktop.** "StarterClock" starts the app. "Jaktstart startlistor" fetches both chase start lists from the first menu server that answers (`-ChaseServers`, menu port 8096) into `C:\Jaktstart`: `jaktstart-herrkavlen.csv` and `jaktstart-damkavlen.csv`. TOOLS: "Jaktstart testlistor (start om 5 min)" fetches test lists whose first start is 5 minutes from now.
+- **In StarterClock:** Load, then "Select SIME start LIST file" (accepts .csv, .txt, .xml), and pick the class's file.
+
+Install a single station without renaming it:
+
+```
+powershell -ExecutionPolicy Bypass -File install.ps1 -Modules jaktstart -Function Jaktstart -ChaseServers <server01>,<server02> -StarterClockUrl http://<utility>:8097/starterclock
+```
+
 ## Files
 
 - `install.ps1` loads `modules/<name>.ps1`; `files/` holds the scripts installed on the laptop (wallpaper, desktop row, receipt watcher, firewall switch); `restore.ps1` undoes it.
