@@ -50,6 +50,7 @@ curl -fsSLo %TEMP%\restore.ps1 https://raw.githubusercontent.com/hakanhammarin/1
 | powerloss | PowerLoss agent at boot | x | |
 | ola | OLA from SOFT's MSI, properties in `C:\ProgramData\OLA6`, OLA-Klient and TA-Klient icons (oringen: point it at the event with `-OlaServer` and `-OlaEvent`) | x | x |
 | nummerlappar | bib printing station on PRINT-xx: OKI C542 PS with default paper "10mila bib" (225x160 landscape, fed short edge first), Python, Acrobat Reader, `C:\bibs` printing in descending order | x | |
+| jaktstart | chase start station (CHASE-xx): StarterClock Store app 1.6.0.0 (Tak-Soft) for every user, from the utility server on the LAN (`-StarterClockUrl`, never the public release), old ClickOnce copy removed; "Jaktstart startlistor" icon fetching the `/jaktstart` lists from the menu :8096 into `C:\Jaktstart`, test lists in TOOLS | x | |
 | reader | Acrobat Reader on every laptop except 10mila readout (READOUT-xxxx), default for PDF (policy, at sign-in), no AI assistant, upsell, cloud, welcome screen or updater | x | x |
 | edge | Edge without first-run questions or translation offers (also after Rensa profil), local start page with the event graphics and buttons: Google, Eventor + 10MILA/online or Gmail/O-Ringen/Resultat | x | x |
 | libreoffice | LibreOffice (O-Ringen deltagarservice), Swedish, no update checks | | x |

@@ -15,6 +15,12 @@ param(
   [string]$ReleaseUrl = 'https://github.com/hakanhammarin/10mila-windows-client-install/releases/latest/download',
   [string]$SiDriverUrl = 'https://sportident.com/download/sportident-usb-driver.2026.06.09.zip',  # signed, works on 24H2+
   [string]$BibPrinterIp = '192.168.1.27',        # OKI C542 for Nummerlappar, reached as OKIC542PS (hosts file)
+  [string]$StarterClockUrl = 'http://10.0.0.229:8097/starterclock',   # Jaktstart: Tak-Soft's Store app (9WZDNCRFJ937) from the utility
+                                                  # server on the LAN (search.sh copies dist/ there), never from the public release
+  [string]$StarterClockPackage = 'StarterClock.appxbundle',
+  [string[]]$StarterClockDeps = @('Microsoft.VCLibs.140.00_14.0.33519.0_x64.appx', 'Microsoft.NET.Native.Framework.2.2_2.2.29512.0_x64.appx',
+    'Microsoft.NET.Native.Runtime.2.2_2.2.28604.0_x64.appx'),   # and its x64 dependencies
+  [string[]]$ChaseServers,                        # Jaktstart: servers with the start lists (menu :8096), in order; default -OlaServer
   [string]$OkiDriverUrl = 'https://github.com/hakanhammarin/10mila-windows-client-install/releases/latest/download/oki-c542-ps.zip',
   [string]$PythonUrl    = 'https://www.python.org/ftp/python/3.12.10/python-3.12.10-amd64.exe',
   [string]$ReaderUrl    = 'https://ardownload2.adobe.com/pub/adobe/acrobat/win/AcrobatDC/2600222031/AcroRdrDCx642600222031_sv_SE.exe',
@@ -32,9 +38,11 @@ $ProgressPreference = 'SilentlyContinue'
 
 # Profiles: which modules, in order. backup always runs first so restore.ps1 can undo the rest.
 $profiles = @{
-  '10mila'  = 'name', 'region', 'teams', 'sportident', 'siconfig', 'power', 'autoplay', 'notifications', 'autologon', 'powerloss', 'ola', 'reader', 'edge', 'nummerlappar', 'receipt', 'battery', 'firewall', 'update', 'wallpaper', 'desktop', 'taskbar'
+  '10mila'  = 'name', 'region', 'teams', 'sportident', 'siconfig', 'power', 'autoplay', 'notifications', 'autologon', 'powerloss', 'ola', 'reader', 'edge', 'nummerlappar', 'jaktstart', 'receipt', 'battery', 'firewall', 'update', 'wallpaper', 'desktop', 'taskbar'
   'oringen' = 'region', 'teams', 'sportident', 'siconfig', 'power', 'autoplay', 'notifications', 'autologon', 'ola', 'libreoffice', 'reader', 'edge', 'receipt', 'battery', 'firewall', 'update', 'wallpaper', 'desktop', 'taskbar'
 }
+if (-not $ChaseServers) { $ChaseServers = @($OlaServer) }
+$ChaseServers = @($ChaseServers | ForEach-Object { $_ -split ',' } | Where-Object { $_ })
 $Modules = @($Modules | ForEach-Object { $_ -split ',' } | Where-Object { $_ })   # powershell -File passes a,b as one string
 if (-not $Modules) { $Modules = $profiles[$Setup] }
 if (-not $Modules) { throw "unknown profile $Setup (known: $($profiles.Keys -join ', '))" }
